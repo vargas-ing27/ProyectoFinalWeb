@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${barbero.shopName} + ' - Detalles'">Detalle Barbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Inicio</a></li>
+                <li><a th:href="@{/home#barberos}">Barberos</a></li>
+                <li>
+                    <a th:if="${isLoggedIn}" th:href="@{/booking/mis-reservas}">Mis Reservas</a>
+                    <a th:if="${!isLoggedIn}" th:href="@{/login}">Mis Citas</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="buttons">
+            <div th:if="${!isLoggedIn}" style="display:flex; gap:10px;">
+                <a th:href="@{/login}" class="btn-login">Iniciar Sesión</a>
+                <a th:href="@{/register}" class="btn-register">Registrarse</a>
+            </div>
+            <div th:if="${isLoggedIn}" class="user-info">
+                <span style="color: var(--muted); font-size: 0.9rem;">
+                    Hola, <b th:text="${usuario.fullName}">User</b>
+                </span>
+                <a th:href="@{/logout}" class="btn-login">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="barber-detail-container" style="padding-top: 100px;"> 
+        
+        <section class="profile-header">
+            <div class="profile-image-container">
+                <img th:if="${barbero.profileImageUrl != null}" th:src="@{${barbero.profileImageUrl}}" alt="Foto Barbero" class="profile-img-lg">
+                <img th:if="${barbero.profileImageUrl == null}" th:src="@{/images/fotoperfil.png}" alt="Default" class="profile-img-lg">
+            </div>
+            
+            <div class="profile-info">
+                <h1 th:text="${barbero.user.fullName}">Nombre del barbero</h1>
+                
+                <div class="barber-meta" style="display: flex; align-items: center; gap: 10px;">
+                    <h3 th:text="${barbero.shopName}" class="barber-name" style="margin: 0;">Nombre de la barberia</h3>
+                    <div class="rating-display" style="color: #f4ba1c; font-weight: bold;">
+                        <i class="fa-solid fa-star"></i>
+                        <span th:text="${promedio}">0.0</span>
+                        <span style="color: gray; font-weight: normal; font-size: 0.9rem;" th:text="'(' + ${resenas.size()} + ')'"></span>
+                    </div>
+                </div>
+                
+                <p class="address" th:text="'📍 ' + ${barbero.address}">Dirección</p>
+                <p class="phone" th:text="'📞 ' + ${barbero.phone}">Teléfono</p>
+                <p class="bio" th:text="${barbero.bio}">Descripción...</p>
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <section class="services-catalog">
+            <h2 class="catalog-title">Servicios Disponibles</h2>
+            
+            <p th:if="${servicios.empty}" class="empty-msg">Este barbero aún no ha publicado sus servicios.</p>
+
+            <div class="services-grid" th:if="${!servicios.empty}">
+                <article class="service-card" th:each="servicio : ${servicios}">
+                    <div class="service-content">
+                        <h3 th:text="${servicio.name}">Corte</h3>
+                        <p class="service-desc" th:text="${servicio.description}">Desc</p>
+                        <span class="service-duration" th:text="'⏱ ' + ${servicio.durationMinutes} + ' min'">30 min</span>
+                    </div>
+                    <div class="service-action">
+                        <p class="price" th:text="'$ ' + ${#numbers.formatInteger(servicio.price, 0, 'POINT')}">$ 20.000</p>
+                        <a th:if="${isLoggedIn}" 
+                           th:href="@{/booking/{bid}/{sid}(bid=${barbero.id}, sid=${servicio.id})}" 
+                           class="btn-secondary btn-book">Reservar</a>
+                        <a th:if="${!isLoggedIn}" 
+                           th:href="@{/login}" 
+                           class="btn-secondary btn-book">Reservar</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <section class="reviews-section">
+            
+            <div class="reviews-header">
+                <h2>Opiniones de Clientes</h2>
+                <div th:if="${exito}" class="alert-success"><span th:text="${exito}"></span></div>
+                <div th:if="${error}" class="alert-error"><span th:text="${error}"></span></div>
+            </div>
+
+            <div class="ratings-only-section">
+                <h3>Calificaciones</h3>
+                <ul class="ratings-list">
+                    <li th:each="review : ${resenas}" 
+                        th:if="${review.rating > 0 and (review.comment == null or review.comment == '')}" 
+                        class="rating-item">
+                        
+                        <div class="rating-info">
+                            <strong th:text="${review.client.fullName}">Cliente</strong>
+                            <span class="stars">
+                                <span th:each="i : ${#numbers.sequence(1, review.rating)}"><i class="fa-solid fa-star"></i></span>
+                            </span>
+                        </div>
+
+                        <div th:if="${isLoggedIn and usuario.id == review.client.id}" class="delete-action">
+                            <form th:action="@{/reviews/delete/{id}(id=${review.id})}" method="post" onsubmit="return confirm('¿Eliminar tu calificación?');">
+                                <input type="hidden" name="barberId" th:value="${barbero.id}">
+                                <button type="submit" class="btn-delete-icon"><i class="fa-solid fa-trash-can"></i></button>
+                            </form>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <hr class="divider-small">
+
+            <div class="opinions-section">
+                <h3>Opiniones Escritas</h3>
+                <div class="opinions-list">
+                    <div th:each="review : ${resenas}" 
+                         th:if="${review.comment != null and review.comment != ''}" 
+                         class="review-card opinion-card">
+                        
+                        <div class="review-header">
+                            <strong th:text="${review.client.fullName}">Usuario</strong>
+                            <div th:if="${isLoggedIn and usuario.id == review.client.id}" class="delete-action-card">
+                                <form th:action="@{/reviews/delete/{id}(id=${review.id})}" method="post" onsubmit="return confirm('¿Eliminar tu opinión?');">
+                                    <input type="hidden" name="barberId" th:value="${barbero.id}">
+                                    <button type="submit" class="btn-delete-text">Eliminar</button>
+                                </form>
+                            </div>
+                            <div class="review-rating" th:if="${review.rating > 0}">
+                                <span th:each="i : ${#numbers.sequence(1, review.rating)}"><i class="fa-solid fa-star"></i></span>
+                            </div>
+                        </div>
+                        
+                        <p th:text="${review.comment}" class="review-text">...</p>
+                        <small th:text="${#dates.format(review.createdAt, 'dd/MM/yyyy')}" class="review-date">Fecha</small>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${isLoggedIn}" class="review-actions-container">
+                <div class="rating-box">
+                    <h3 th:text="'Calificar a ' + ${barbero.user.fullName}">Calificar</h3>
+                    <form th:action="@{/reviews/add}" method="post" class="rating-form">
+                        <input type="hidden" name="barberId" th:value="${barbero.id}">
+                        <select name="rating" required class="rating-select">
+                            <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
+                            <option value="4">⭐⭐⭐⭐ Muy bueno</option>
+                            <option value="3">⭐⭐⭐ Bueno</option>
+                            <option value="2">⭐⭐ Regular</option>
+                            <option value="1">⭐ Malo</option>
+                        </select>
+                        <button type="submit" class="btn-primary">Enviar Calificación</button>
+                    </form>
+                </div>
+
+                <div class="opinion-box">
+                    <h4>¿Tienes alguna opinión?</h4>
+                    <form th:action="@{/reviews/add}" method="post" class="opinion-form">
+                        <input type="hidden" name="barberId" th:value="${barbero.id}">
+                        <textarea name="comment" rows="3" placeholder="Escribe tu experiencia..." required class="opinion-textarea"></textarea>
+                        <div class="form-footer">
+                            <button type="submit" class="btn-secondary">Enviar Opinión</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div th:if="${!isLoggedIn}" class="login-prompt">
+                <p><a th:href="@{/login}">Inicia sesión</a> para opinar.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer-minimal">
+        <div class="footer-minimal-container">
+            <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+            <div class="social-icons-row">
+                <a href="#" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

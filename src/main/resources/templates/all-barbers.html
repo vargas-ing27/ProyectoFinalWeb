@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todos los Barberos - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    <header class="navbar" id="mainNavbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+        </div>
+        
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Inicio</a></li>
+                <li><a th:href="@{/home#barberos}">Barberos</a></li>
+                <li>
+                    <a th:if="${isLoggedIn}" th:href="@{/home#miscitas}">Mis Citas</a>
+                    <a th:if="${!isLoggedIn}" th:href="@{/login}" class="nav-link">Mis Citas</a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="buttons">
+            <div th:if="${!isLoggedIn}" class="header-auth-buttons">
+                <a th:href="@{/login}" class="btn-login header-login-link">Iniciar Sesión</a>
+                <a th:href="@{/register}" class="btn-register header-register-link">Registrarse</a>
+            </div>
+
+            <div th:if="${isLoggedIn}" class="user-info">
+                <span class="user-greeting">
+                    Hola, <b th:text="${usuario.fullName}" class="user-name">Usuario</b>
+                </span>
+                <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="all-barbers-container">
+        
+        <section class="featured-barbers">
+            <div class="section-header">
+                <h2>Comunidad de Barberos</h2>
+                <p class="section-subtitle">Explora todos nuestros profesionales disponibles en Neiva</p>
+            </div>
+            
+            <div class="barbers-grid" th:if="${!barberos.empty}">
+                <article class="barber-card" th:each="perfil : ${barberos}">
+                    <img th:if="${perfil.profileImageUrl != null}" th:src="@{${perfil.profileImageUrl}}" alt="Foto">
+                    <img th:if="${perfil.profileImageUrl == null}" th:src="@{/images/fotoperfil.png}" alt="Default">
+
+                    <h3 th:text="${perfil.user.fullName}">Nombre</h3>
+                    <p th:text="${perfil.shopName}" class="barber-shop-name">Local</p>
+                    
+                    <p th:text="${perfil.bio}" class="barber-bio">Descripción...</p>
+                    
+                    <a th:href="@{/ver/barbero/{id}(id=${perfil.id})}" class="btn-secondary">Ver Perfil</a>
+                </article>
+            </div>
+        </section>
+
+    </main>
+
+
+   <footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+    <script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
+
+</body>
+</html>

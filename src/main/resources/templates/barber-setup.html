@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Perfil</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    
+  <header class="navbar">
+        <div class="logo">
+            <a th:if="${perfil.id != null}" th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+            
+            <span th:if="${perfil.id == null}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </span>
+        </div>
+
+        <nav class="menu">
+            <ul>
+                <li th:if="${perfil.id != null}">
+                    <a th:href="@{/home}">Volver al Panel</a>
+                </li>
+
+                <li th:if="${perfil.id == null}">
+                    <a th:href="@{/logout}" >Cancelar y Salir</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="auth-container" style="padding-top: 100px;">
+        <div class="barber-box">
+            
+            <h2 style="text-align: center; margin-bottom: 20px;" 
+                th:text="${perfil.id != null} ? 'Tu Perfil Profesional' : '¡Bienvenido, colega!'">
+                Configurar Perfil
+            </h2>
+
+            <p th:if="${perfil.id == null}" class="barber-note">Antes de empezar, necesitamos configurar tu perfil profesional.</p>
+
+            <form th:action="@{/barber/setup}" th:object="${perfil}" method="post" enctype="multipart/form-data">
+                
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="input-group">
+                    <label>Nombre de la barbería:</label>
+                    <input type="text" th:field="*{shopName}" placeholder="Ej: The King Cuts" required />
+                </div>
+
+                <div class="input-group">
+                    <label>Dirección del local:</label>
+                    <input type="text" th:field="*{address}" placeholder="Ej: Calle 10 # 5-50" required />
+                </div>
+
+                <div class="input-group">
+                    <label>Teléfono de Contacto:</label>
+                    <input type="tel" 
+                           th:field="*{phone}" 
+                           placeholder="Ej: 3001234567" 
+                           maxlength="10" 
+                           minlength="10"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                           required />
+                </div>
+
+                <div class="input-group">
+                    <label>Descripción (Bio):</label>
+                    <textarea th:field="*{bio}" placeholder="Cuento con 5 años de experiencia..." rows="4" 
+                              style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Sube tu foto de perfil:</label>
+                    <input type="file" name="imagen" accept="image/*" />
+                    
+                    <div th:if="${perfil.profileImageUrl != null}" style="margin-top: 10px; text-align: center;">
+                        <p style="font-size: 0.8rem; color: gray;">Foto actual:</p>
+                        <img th:src="@{${perfil.profileImageUrl}}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit">Guardar y Continuar</button>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>

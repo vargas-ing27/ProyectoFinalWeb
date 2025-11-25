@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda del Barbero - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="calendar-page">
+
+    <header class="navbar" id="mainNavbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Mi Panel</a></li>
+                <li><a th:href="@{/barber/services}">Mis Servicios</a></li>
+                <li><a th:href="@{/barber/schedule}">Mi Agenda</a></li>
+                <li><a href="#" class="nav-link active">Citas Agendadas</a></li>
+            </ul>
+        </nav>
+        <div class="buttons">
+            <div class="user-info">
+                <span class="user-greeting">
+                    Hola, <b th:text="${usuario.fullName}">Usuario</b>
+                    <span class="badge-pro">PRO</span>
+                </span>
+                <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="calendar-container">
+        
+        <div class="section-header">
+            <h2>Calendario de Citas</h2>
+            <p>Gestiona tus próximas reservas</p>
+        </div>
+
+        <div class="alerts-wrapper">
+            <div th:if="${exito}" class="alert-success">
+                <span th:text="${exito}">Operación exitosa</span>
+            </div>
+            <div th:if="${error}" class="alert-error">
+                <span th:text="${error}">Error</span>
+            </div>
+        </div>
+
+        <section class="appointments-section">
+            
+            <div th:if="${citas.empty}" class="empty-state">
+                <p>No tienes citas programadas próximamente.</p>
+            </div>
+
+            <div class="appointments-grid" th:if="${!citas.empty}">
+                
+                <article class="appointment-card" th:each="cita : ${citas}">
+                    
+                    <div class="card-date">
+                        <span class="day" th:text="${#temporals.format(cita.appointmentDate, 'dd')}">23</span>
+                        <span class="month" th:text="${#temporals.format(cita.appointmentDate, 'MMM')}">Nov</span>
+                        <span class="time" th:text="${#temporals.format(cita.appointmentDate, 'HH:mm')}">14:00</span>
+                    </div>
+                    
+                    <div class="card-details">
+                        <h3 th:text="${cita.client.fullName}">Nombre Cliente</h3>
+                        <div class="service-info">
+                            <span class="service-name" th:text="${cita.service.name}">Corte</span> 
+                            <span class="service-duration" th:text="'(' + ${cita.service.durationMinutes} + ' min)'">(30 min)</span>
+                        </div>
+                        
+                        <div class="status-wrapper">
+                            <span class="status-label" 
+                                  th:text="${cita.status}"
+                                  th:classappend="${cita.status == 'CONFIRMED' ? 'status-confirmed' : 'status-cancelled'}">
+                               CONFIRMED
+                            </span>
+                        </div>
+                        
+                        <div th:if="${cita.status == 'CANCELLED'}" class="cancel-reason">
+                            <small>Motivo: <span th:text="${cita.cancellationReason}">...</span></small>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post" onsubmit="return confirmarCancelacion(event)">
+                            <input type="hidden" name="citaId" th:value="${cita.id}">
+                            <input type="hidden" name="motivo" class="input-motivo">
+                            <input type="hidden" name="redirectUrl" value="/barber/calendar">
+                            
+                            <button type="submit" class="btn-cancel-small">Cancelar Cita</button>
+                        </form>
+                    </div>
+                </article>
+
+            </div>
+
+        </section>
+
+    </main>
+
+<footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+    <script>
+        // Script para cancelar con motivo
+        function confirmarCancelacion(event) {
+            event.preventDefault();
+            const form = event.target;
+            const motivoInput = form.querySelector('.input-motivo');
+            const motivo = prompt("Indica el motivo de la cancelación para el cliente:");
+            
+            if (motivo && motivo.trim().length >= 5) {
+                motivoInput.value = motivo;
+                form.submit();
+            } else if (motivo !== null) {
+                 alert("Debes ingresar un motivo válido.");
+            }
+        }
+    </script>
+
+</body>
+</html>

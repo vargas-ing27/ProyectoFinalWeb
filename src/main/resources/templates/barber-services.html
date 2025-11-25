@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Servicios - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="navbar" id="mainNavbar">
+    <div class="logo">
+        <a th:href="@{/home}">
+            <img th:src="@{/images/logonofondo.png}" alt="MiBarbero Logo">
+        </a>
+    </div>
+    
+    <nav class="menu">
+        <ul>
+            <li><a th:href="@{/home}">Mi Panel</a></li>
+            
+            <li><a th:href="@{/barber/services}">Mis Servicios</a></li>
+            <li><a th:href="@{/barber/schedule}">Mi Agenda</a></li>
+        </ul>
+    </nav>
+
+    <div class="buttons">
+        <div class="user-info">
+            <span class="user-greeting">
+                Hola, <b th:text="${usuario.fullName}" class="user-name">Usuario</b>
+                <span class="badge-pro">PRO</span>
+            </span>
+            <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+        </div>
+    </div>
+</header>
+
+    <main class="services-container">
+        
+        <div class="services-header">
+            <h2>Mis Servicios</h2>
+        </div>
+
+        <section class="service-form-section">
+            <h3 th:text="${nuevoServicio.id != null} ? 'Editar Servicio' : 'Agregar Nuevo Servicio'">Gestión</h3>
+            
+            <form th:action="@{/barber/services/add}" th:object="${nuevoServicio}" method="post" class="service-form">
+                
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="name">Nombre del Servicio:</label>
+                        <input type="text" id="name" th:field="*{name}" placeholder="Ej: Corte Degradado" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="price">Precio ($):</label>
+                        <input type="number" id="price" th:field="*{price}" placeholder="Ej: 25000" step="1000" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="duration">Duración (Minutos):</label>
+                        <input type="number" id="duration" th:field="*{durationMinutes}" placeholder="Ej: 45" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="description">Descripción:</label>
+                        <input type="text" id="description" th:field="*{description}" placeholder="Ej: Incluye lavado">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary btn-save">
+                        <span th:text="${nuevoServicio.id != null} ? 'Actualizar' : 'Guardar Servicio'">Guardar</span>
+                    </button>
+                    
+                    <a th:if="${nuevoServicio.id != null}" th:href="@{/barber/services}" class="btn-secondary services-cancel-edit">Cancelar Edición</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="services-list-section">
+            <h3>Servicios Activos</h3>
+            
+            <div th:if="${servicios.empty}" class="empty-message">
+                <p>Aún no has agregado servicios.</p>
+            </div>
+
+            <div class="table-responsive" th:if="${!servicios.empty}">
+                <table class="services-table">
+                    <thead>
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Descripción</th>
+                            <th>Duración</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="servicio : ${servicios}">
+                            <td th:text="${servicio.name}">Nombre</td>
+                            <td th:text="${servicio.description}">Desc</td>
+                            <td th:text="${servicio.durationMinutes} + ' min'">Tiempo</td>
+                            <td th:text="'$' + ${servicio.price}">Precio</td>
+                            <td>
+                                <a th:href="@{/barber/services/edit/{id}(id=${servicio.id})}" class="btn-edit">Editar</a>
+
+                                <a th:href="@{/barber/services/delete/{id}(id=${servicio.id})}" 
+                                   onclick="return confirm('¿Eliminar este servicio?')"
+                                   class="btn-delete">Eliminar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+   <footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+<script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
+</body>
+</html>

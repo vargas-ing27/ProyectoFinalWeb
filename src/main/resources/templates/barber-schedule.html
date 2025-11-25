@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Agenda - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="navbar" id="mainNavbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="MiBarbero Logo">
+            </a>
+        </div>
+        
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Mi Panel</a></li>
+                <li><a th:href="@{/barber/services}">Mis Servicios</a></li>
+                <li><a th:href="@{/barber/schedule}">Mi Agenda</a></li>
+            </ul>
+        </nav>
+
+        <div class="buttons">
+            <div class="user-info">
+                <span class="user-greeting">
+                    Hola, <b th:text="${usuario.fullName}" class="user-name">Usuario</b>
+                    <span class="badge-pro">PRO</span>
+                </span>
+                <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="schedule-container">
+        
+        <div class="schedule-header">
+            <h2>Configura tu Disponibilidad Semanal</h2>
+            <p>Define tu horario laboral. Recuerda guardar los cambios al final.</p>
+        </div>
+
+        <form th:action="@{/barber/schedule/saveAll}" th:object="${wrapper}" method="post" class="schedule-main-form">
+            
+            <section class="schedule-list">
+                
+                <div class="schedule-row-header">
+                    <span>Día</span>
+                    <span>Estado</span>
+                    <span>Hora Inicio</span>
+                    <span>Hora Fin</span>
+                </div>
+
+                <div class="schedule-item" th:each="dia, stat : *{horarios}">
+                    
+                    <input type="hidden" th:field="*{horarios[__${stat.index}__].id}" />
+                    <input type="hidden" th:field="*{horarios[__${stat.index}__].dayOfWeek}" />
+                    <div class="day-name">
+                        <strong th:text="${dia.dayName}">Día</strong>
+                    </div>
+
+                    <div class="day-status">
+    <label class="switch">
+        <input type="checkbox" class="toggle-status" 
+               th:name="|horarios[${stat.index}].active|" 
+               th:checked="*{horarios[__${stat.index}__].active}" />
+        
+        <span class="slider round"></span>
+    </label>
+    
+    <input type="hidden" th:name="|_horarios[${stat.index}].active|" value="on"/>
+
+    <span class="status-label" th:text="*{horarios[__${stat.index}__].active} ? 'Abierto' : 'Cerrado'">Estado</span>
+</div>
+
+                    <div class="time-input-group">
+                        <input type="time" th:field="*{horarios[__${stat.index}__].startTime}" required>
+                    </div>
+
+                    <div class="time-input-group">
+                        <input type="time" th:field="*{horarios[__${stat.index}__].endTime}" required>
+                    </div>
+
+                </div>
+
+                <div class="schedule-footer-actions flex justify-center gap-15 align-center">
+    
+    <button type="submit" class="btn-save-schedule-all">Guardar Todos los Cambios</button>
+
+</div>
+
+</form> 
+
+<div class="text-center mt-15">
+    <form th:action="@{/barber/schedule/reset}" method="post">
+        <button type="submit" class="btn-reset-schedule">
+            ↺ Restablecer Horario Predeterminado
+        </button>
+    </form>
+</div>
+            </section>
+        </form>
+
+    </main>
+
+    <footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+    <script>
+        // Script visual para cambiar texto Abierto/Cerrado
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggles = document.querySelectorAll('.toggle-status');
+
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const label = this.closest('.day-status').querySelector('.status-label');
+                    if (this.checked) {
+                        label.textContent = "Abierto";
+                        label.style.color = "#fff";
+                        label.style.opacity = "1";
+                    } else {
+                        label.textContent = "Cerrado";
+                        label.style.color = "#aaa";
+                        label.style.opacity = "0.7";
+                    }
+                });
+            });
+        });
+        
+        // Script Navbar Scroll
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
+</body>
+</html>

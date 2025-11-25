@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Reservas - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="reservations-page">
+    
+    <header class="navbar" id="mainNavbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+        </div>
+        
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Inicio</a></li>
+                <li><a href="#" class="nav-link active">Mis Reservas</a></li>
+            </ul>
+        </nav>
+
+        <div class="buttons">
+            <div class="user-info">
+                <span class="user-greeting">
+                    Hola, <b th:text="${usuario.fullName}">Usuario</b>
+                </span>
+                <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="reservations-container">
+        
+        <section class="reservations-section">
+            <div class="section-header">
+                <h2>Mis Reservas Agendadas</h2>
+            </div>
+
+            <div class="alerts-wrapper">
+                <div th:if="${exito}" class="alert-success">
+                    <span th:text="${exito}">Operación exitosa</span>
+                </div>
+                <div th:if="${error}" class="alert-error">
+                    <span th:text="${error}">Error</span>
+                </div>
+            </div>
+
+            <div th:if="${misCitas.empty}" class="empty-state">
+                <p>No tienes citas agendadas aún.</p>
+                <a th:href="@{/home#barberos}" class="btn-primary">Ver Barberos</a>
+            </div>
+
+            <div class="table-responsive" th:if="${!misCitas.empty}">
+                <table class="reservations-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Barbero</th>
+                            <th>Servicio</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cita : ${misCitas}">
+                            <td th:text="${#temporals.format(cita.appointmentDate, 'dd/MM/yyyy HH:mm')}">Fecha</td>
+                            <td th:text="${cita.barber.user.fullName}">Pedro Perez</td>
+                            <td th:text="${cita.service.name}">Corte</td>
+                            <td th:text="'$ ' + ${#numbers.formatInteger(cita.service.price, 0, 'POINT')}">$ 20.000</td>
+                            <td>
+                                <span class="status-badge" 
+                                      th:text="${cita.status}" 
+                                      th:classappend="${cita.status == 'CONFIRMED' ? 'status-confirmed' : (cita.status == 'CANCELLED' ? 'status-cancelled' : '')}">
+                                    CONFIRMED
+                                </span>
+                                
+                                <div th:if="${cita.status == 'CANCELLED'}" class="cancellation-reason">
+                                    Motivo: <span th:text="${cita.cancellationReason}">Razón</span>
+                                </div>
+                            </td>
+                            <td>
+                                <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post" onsubmit="return confirmarCancelacion(event)" class="cancel-form">
+                                    <input type="hidden" name="citaId" th:value="${cita.id}">
+                                    <input type="hidden" name="motivo" class="input-motivo">
+                                    <input type="hidden" name="redirectUrl" value="/booking/mis-reservas">
+                                    
+                                    <button type="submit" class="btn-cancel">Cancelar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+<footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+    <script>
+        // Lógica para el prompt de cancelación
+        function confirmarCancelacion(event) {
+            event.preventDefault();
+            const form = event.target;
+            const motivoInput = form.querySelector('.input-motivo');
+            
+            const motivo = prompt("Por favor, indica el motivo de la cancelación (mínimo 5 caracteres):");
+            
+            if (motivo && motivo.trim().length >= 5) {
+                motivoInput.value = motivo;
+                form.submit();
+            } else if (motivo !== null) {
+                 alert("Debes ingresar un motivo válido para cancelar.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Cita - MiBarbero</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="navbar" id="mainNavbar">
+        <div class="logo">
+            <a th:href="@{/home}">
+                <img th:src="@{/images/logonofondo.png}" alt="Logo">
+            </a>
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a th:href="@{/home}">Inicio</a></li>
+                <li><a th:href="@{/home#barberos}">Barberos</a></li>
+                <li><a th:href="@{/home#miscitas}">Mis Citas</a></li>
+            </ul>
+        </nav>
+        <div class="buttons">
+            <div class="user-info">
+                <span class="user-greeting">
+                    Hola, <b th:text="${usuario.fullName}">Usuario</b>
+                </span>
+                <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="booking-container">
+        
+        <div class="booking-header">
+            <h2>Selecciona tu Horario</h2>
+            <p>Estás reservando con <strong th:text="${barbero.user.fullName}">Barbero</strong></p>
+        </div>
+
+        <div class="booking-content">
+            <div class="booking-summary">
+                <h3>Detalles del Servicio</h3>
+                
+                <div class="summary-item">
+                    <span class="label">Servicio:</span>
+                    <span class="value" th:text="${servicio.name}">Corte</span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="label">Descripción:</span>
+                    <span class="value" th:text="${servicio.description}">Descripción del corte...</span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="label">Duración:</span>
+                    <span class="value" th:text="${servicio.durationMinutes} + ' min'">30 min</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span class="label">Precio:</span>
+                    <span class="value price" th:text="'$ ' + ${#numbers.formatInteger(servicio.price, 0, 'POINT')}">$ 20.000</span>
+                </div>
+            </div>
+
+            <div class="booking-selector">
+                
+                <form th:action="@{/booking/{bid}/{sid}(bid=${barbero.id}, sid=${servicio.id})}" method="get" class="date-form">
+                    <label for="fecha">Elige un día:</label>
+                    <input type="date" id="fecha" name="fecha" th:value="${fechaSeleccionada}" onchange="this.form.submit()" required>
+                </form>
+
+                <hr class="divider">
+
+                <h3>Horarios Disponibles</h3>
+                
+                <div th:if="${huecos.empty}" class="no-slots-msg">
+                    <p>Lo sentimos, no hay horarios disponibles para esta fecha.</p>
+                    <p>Intenta seleccionar otro día.</p>
+                </div>
+
+                <div class="slots-grid" th:if="${!huecos.empty}">
+                    
+                    <div th:each="hora : ${huecos}">
+                        <form th:action="@{/booking/confirm}" method="post">
+                            <input type="hidden" name="barberId" th:value="${barbero.id}">
+                            <input type="hidden" name="serviceId" th:value="${servicio.id}">
+                            <input type="hidden" name="fecha" th:value="${fechaSeleccionada}">
+                            <input type="hidden" name="hora" th:value="${hora}">
+                            
+                            <button type="submit" class="btn-slot" th:text="${hora}">08:00</button>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+
+    <footer class="footer-minimal">
+    <div class="footer-minimal-container">
+        
+        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+
+        <div class="social-icons-row">
+            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+</footer>
+
+</body>
+</html>
