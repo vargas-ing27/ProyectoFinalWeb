@@ -15,7 +15,7 @@
 
     <main class="auth-container">
         <div class="login-box">
-            <h2>Iniciar Sesión</h2>
+            <h2>Inicia Sesión</h2>
 
             <div th:if="${exito}" class="alert-success" th:text="${exito}"></div>
             <div th:if="${error}" class="alert-error" th:text="${error}"></div>
@@ -24,23 +24,16 @@
                 
                 <div class="input-group">
                     <label for="identificador">Usuario o Correo</label>
-                    <input type="text" name="identificador" placeholder="Ej: juanperez o juan@mail.com" required>
+                    <input type="text" name="identificador" placeholder="" required>
                 </div>
 
                 <div class="input-group">
                     <label for="password">Contraseña</label>
-                    <input type="password" name="password" placeholder="••••••••" required>
+                    <input type="password" name="password" placeholder="" required>
                 </div>
 
                 <button type="submit" class="auth-submit">Ingresar</button>
             </form>
-
-            <div class="login-or-divider">O</div>
-            
-            <button class="btn-google-login">
-                <img src="https://authjs.dev/img/providers/google.svg" width="20" alt=""> 
-                Continuar con Google
-            </button>
 
             <div class="auth-note">
                 <p>¿No tienes cuenta? <a th:href="@{/register}">Regístrate aquí</a></p>
@@ -48,4 +41,21 @@
         </div>
     </main>
 </body>
+
+<script>
+    // 2. Ocultar alertas automáticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertas = document.querySelectorAll('.alert-success, .alert-error');
+            
+            if (alertas.length > 0) {
+                setTimeout(function() {
+                    alertas.forEach(alerta => {
+                        alerta.style.transition = "opacity 0.5s ease";
+                        alerta.style.opacity = "0";
+                        setTimeout(() => alerta.remove(), 500);
+                    });
+                }, 3000);
+            }
+        });
+</script>
 </html>

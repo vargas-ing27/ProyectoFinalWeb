@@ -19,7 +19,7 @@
             <ul>
                 <li><a th:href="@{/home}">Inicio</a></li>
                 <li><a th:href="@{/home#barberos}">Barberos</a></li>
-                <li><a th:href="@{/home#miscitas}">Mis Citas</a></li>
+                <a th:if="${isLoggedIn}" th:href="@{/booking/mis-reservas}">Mis Reservas</a>
             </ul>
         </nav>
         <div class="buttons">
@@ -36,7 +36,7 @@
         
         <div class="booking-header">
             <h2>Selecciona tu Horario</h2>
-            <p>Estás reservando con <strong th:text="${barbero.user.fullName}">Barbero</strong></p>
+            <p>Estás reservando con <strong class="barber-name-highlight" th:text="${barbero.user.fullName}">Barbero</strong></p>
         </div>
 
         <div class="booking-content">
@@ -83,16 +83,48 @@
                 <div class="slots-grid" th:if="${!huecos.empty}">
                     
                     <div th:each="hora : ${huecos}">
-                        <form th:action="@{/booking/confirm}" method="post">
+                        <form th:if="${usuario.phone != null and usuario.phone != ''}" th:action="@{/booking/confirm}" method="post">
                             <input type="hidden" name="barberId" th:value="${barbero.id}">
                             <input type="hidden" name="serviceId" th:value="${servicio.id}">
                             <input type="hidden" name="fecha" th:value="${fechaSeleccionada}">
                             <input type="hidden" name="hora" th:value="${hora}">
-                            
                             <button type="submit" class="btn-slot" th:text="${hora}">08:00</button>
                         </form>
+
+                        <button th:if="${usuario.phone == null or usuario.phone == ''}" 
+                                type="button" 
+                                class="btn-slot" 
+                                th:text="${hora}"
+                                th:data-hora="${hora}"
+                                onclick="openPhoneModal(this.getAttribute('data-hora'))">
+                        </button>
                     </div>
 
+                </div>
+
+                <div id="phoneModal" class="custom-modal-overlay" style="display: none;">
+                    <div class="custom-modal-box" style="max-width: 400px;">
+                        <h3 style="color: #f4ba1c;">¡Casi listo!</h3>
+                        <p style="color: #ccc; margin-bottom: 20px;">Para confirmar tu reserva, necesitamos un número de contacto.</p>
+                        
+                        <form th:action="@{/booking/confirm}" method="post">
+                            <input type="hidden" name="barberId" th:value="${barbero.id}">
+                            <input type="hidden" name="serviceId" th:value="${servicio.id}">
+                            <input type="hidden" name="fecha" th:value="${fechaSeleccionada}">
+                            <input type="hidden" id="modalHoraInput" name="hora">
+                            
+                            <div style="margin-bottom: 20px;">
+                                <input type="tel" name="clientePhone" placeholder="Tu número de celular" required 
+                                       maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                       style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; font-size: 1.1rem;">
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="button" onclick="closePhoneModal()" class="btn-modal-secondary">Cancelar</button>
+                                <button type="submit" class="btn-modal-primary">Confirmar Reserva</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
             </div>
@@ -102,24 +134,80 @@
 
 
     <footer class="footer-minimal">
-    <div class="footer-minimal-container">
-        
-        <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
+        <div class="footer-minimal-container">
+            
+            <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
 
-        <div class="social-icons-row">
-            <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
-                <i class="fa-brands fa-instagram"></i>
-            </a>
-            <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
-                <i class="fa-brands fa-facebook-f"></i>
-            </a>
-            <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
-                <i class="fa-brands fa-tiktok"></i>
-            </a>
+            <div class="social-icons-row">
+                <a href="https://www.instagram.com/juaniito.vargas?igsh=MWVxY3M2cnp4MzZ0" target="_blank" aria-label="Instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a href="https://www.facebook.com/share/17Y4fg3SBs/" target="_blank" aria-label="Facebook">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+                <a href="https://www.tiktok.com/@gemelito.c?_r=1&_t=ZS-91VfUrtCSkE" target="_blank" aria-label="TikTok">
+                    <i class="fa-brands fa-tiktok"></i>
+                </a>
+            </div>
+
         </div>
+    </footer>
 
-    </div>
-</footer>
+    <script>
+        const phoneModal = document.getElementById('phoneModal');
+        const modalHoraInput = document.getElementById('modalHoraInput');
 
+        function openPhoneModal(hora) {
+            // Guardamos la hora que eligió el usuario en el input oculto del modal
+            modalHoraInput.value = hora;
+            phoneModal.style.display = 'flex';
+        }
+
+        function closePhoneModal() {
+            phoneModal.style.display = 'none';
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target === phoneModal) closePhoneModal();
+        });
+    </script>
+
+    <script>
+        // Bloquear fechas pasadas en el calendario
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('fecha');
+            if(dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.setAttribute('min', today);
+            }
+        });
+    </script>
+
+    <script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
+    <script>
+        // DETECTOR DEL BOTÓN ATRÁS
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
 </body>
 </html>

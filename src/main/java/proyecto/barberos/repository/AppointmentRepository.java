@@ -12,16 +12,17 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    // 1. Buscar citas de un barbero en un rango de fecha/hora específico
-    // (Vital para calcular huecos libres y evitar cruces)
+    // Buscar citas para calcular huecos (Se mantiene igual)
     @Query("SELECT a FROM Appointment a WHERE a.barber.id = :barberId AND a.appointmentDate BETWEEN :start AND :end")
     List<Appointment> findByBarberIdAndDateRange(@Param("barberId") Long barberId, 
                                                  @Param("start") LocalDateTime start, 
                                                  @Param("end") LocalDateTime end);
 
-    // 2. Ver historial de citas de un CLIENTE (Para la sección "Mis Citas")
-    List<Appointment> findByClientIdOrderByAppointmentDateDesc(Long clientId);
+    // --- MÉTODOS ACTUALIZADOS CON FILTRO DE TIEMPO ---
+
+    // 2. Para el CLIENTE: Visible + Futuras (o recientes de hace 5 min)
+    List<Appointment> findByClientIdAndVisibleToClientTrueAndAppointmentDateAfterOrderByAppointmentDateDesc(Long clientId, LocalDateTime fechaCorte);
     
-    // 3. Ver agenda de un BARBERO (Para su panel de control)
-    List<Appointment> findByBarberIdOrderByAppointmentDateDesc(Long barberId);
+    // 3. Para el BARBERO: Visible + Futuras (o recientes de hace 5 min)
+    List<Appointment> findByBarberIdAndVisibleToBarberTrueAndAppointmentDateAfterOrderByAppointmentDateDesc(Long barberId, LocalDateTime fechaCorte);
 }

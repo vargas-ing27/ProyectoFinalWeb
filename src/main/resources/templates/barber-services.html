@@ -19,9 +19,10 @@
     <nav class="menu">
         <ul>
             <li><a th:href="@{/home}">Mi Panel</a></li>
-            
             <li><a th:href="@{/barber/services}">Mis Servicios</a></li>
             <li><a th:href="@{/barber/schedule}">Mi Agenda</a></li>
+            <li><a th:href="@{/barber/calendar}">Citas Agendadas</a></li>
+            <li><a th:href="@{/reviews/mis-resenas}">Reseñas</a></li>
         </ul>
     </nav>
 
@@ -113,6 +114,8 @@
                                 <a th:href="@{/barber/services/delete/{id}(id=${servicio.id})}" 
                                    onclick="return confirm('¿Eliminar este servicio?')"
                                    class="btn-delete">Eliminar</a>
+                                   <div th:if="${exito}" style="color: green; margin-bottom: 15px;" th:text="${exito}"></div>
+<div th:if="${error}" style="color: red; margin-bottom: 15px;" th:text="${error}"></div>
                             </td>
                         </tr>
                     </tbody>

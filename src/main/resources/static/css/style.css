@@ -8,7 +8,7 @@
 	--accent-strong: #f4ba1c;
 	--transition: 0.28s ease;
 	/* Nav specific colors (when navbar is white) */
-	--nav-bg: transparent; /* ahora transparente para mostrar el hero detrás */
+	--nav-bg: #0a0a0c; /* Fondo sólido oscuro para evitar solapamientos */
 	--nav-text: #ffffff; /* texto blanco sobre la imagen */
 	--nav-muted: rgba(255,255,255,0.85);
 	--nav-border: rgba(11,11,13,0.06);
@@ -26,27 +26,32 @@ body{
 	-webkit-font-smoothing:antialiased;
 	overflow-x: hidden; /* Prevenir scroll horizontal */
 	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
 }
 
 /* NAVBAR - adaptado al HTML proporcionado */
 .navbar{
-	position:fixed;
-	top:0;
-	left:0;
-	right:0;
-	height:72px;
-	display:flex;
-	align-items:center;
-	justify-content:center; /* centrar el contenido; logo y botones se posicionan a los lados */
- 	padding: 0 1.25rem;
-	background: var(--nav-bg); /* transparente para que se vea el hero */
-	z-index:1000;
-	box-shadow: 0 6px 24px rgba(0,0,0,0.28); /* sombra más sutil para contraste */
-	transition: transform 0.3s ease; /* animación para ocultar/mostrar */
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    height:72px;
+    display:flex;
+    align-items:center;
+    justify-content:center; /* centrar el contenido; logo y botones se posicionan a los lados */
+    padding: 0 1.25rem;
+    background: var(--nav-bg); /* transparente para que se vea el hero */
+    z-index:1000;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.28); /* sombra más sutil para contraste */
+    transition: transform 0.3s ease; /* animación para ocultar/mostrar */
+    will-change: transform;
 }
 
 /* Clase para ocultar la navbar (se añade/quita con JS) */
-.navbar--hidden {
+.navbar--hidden,
+.navbar.navbar--hidden {
     transform: translateY(-100%);
 }
 
@@ -104,7 +109,6 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     color: #03120a;
     text-decoration: none;
     font-weight: 700;
-    box-shadow: 0 8px 30px rgba(0,255,136,0.12);
     transition: all var(--transition);
 }
 
@@ -249,7 +253,6 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 .footer {
     background: rgba(255,255,255,0.02);
     padding: 4rem 0 1rem;
-    margin-top: 4rem;
     border-top: 1px solid rgba(255,255,255,0.06);
 }
 
@@ -384,7 +387,12 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     background: rgba(255,255,255,0.02);
     border-top: 1px solid rgba(255,255,255,0.06);
     padding: 1.5rem 0;
-    margin-top: auto;
+    flex-shrink: 0;
+}
+
+/* Make main content area flex-grow to push footer to bottom */
+main {
+    flex: 1;
 }
 
 .footer-minimal-container {
@@ -430,7 +438,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     background: rgba(255,255,255,0.02);
     padding: 2rem 0 1.5rem;
     border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 3rem;
+    flex-shrink: 0;
 }
 
 .footer-compact-container {
@@ -504,11 +512,17 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 .auth-container{
     position:relative;
     z-index:1;
-    min-height:100vh;
+    flex: 1;
     display:flex;
     align-items:center;
     justify-content:center;
     padding:2rem;
+    padding-top:80px;
+}
+
+/* Específico para la página de configuración del barbero (formulario más largo) */
+.barber-setup-page .auth-container {
+    padding-top:140px !important;
 }
 
 .login-box{
@@ -535,7 +549,15 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 .input-group input{ width:100%; padding:0.9rem 1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color:var(--text); outline:none; }
 .input-group input:focus{ border-color: rgba(244,186,28,0.6); box-shadow: 0 6px 18px rgba(244,186,28,0.06); }
 
-.auth-submit{ display:block; width:100%; padding:14px 16px; border-radius:10px; background: linear-gradient(90deg,var(--accent), var(--accent-strong)); color:#03120a; border:none; font-weight:700; text-decoration:none; cursor:pointer; margin-top:0.5rem; font-size:1.05rem; }
+.auth-submit{ display:block; width:100%; padding:16px 20px; border-radius:12px; background: linear-gradient(135deg, var(--accent), #f0a71b); color:#03120a; border:none; font-weight:700; text-decoration:none; cursor:pointer; margin-top:1.5rem; font-size:1.1rem; transition: all 0.3s ease; }
+
+.auth-submit:hover{
+    transform: translateY(-3px);
+}
+
+.auth-submit:active{
+    transform: translateY(-1px);
+}
 
 .google-text{ margin-top:0.75rem; }
 .google-text a{ color:var(--muted); text-decoration:none; font-weight:600; }
@@ -557,12 +579,104 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 }
 
 /* BARBER REGISTER SPECIFIC STYLES */
-.barber-box{ max-width:560px; padding:2.25rem; }
-.barber-box .input-group input{ padding:1rem 1.05rem; }
+.barber-box{
+    max-width:560px;
+    padding:2.25rem;
+    background: rgba(26, 26, 29, 0.8);
+    border: 1px solid rgba(244, 186, 28, 0.15);
+    border-radius:16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(244, 186, 28, 0.1);
+    backdrop-filter: blur(10px);
+    width: 100%;
+}
+
+.barber-box h2{
+    color: var(--text);
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.barber-box .input-group{
+    margin-bottom: 1.5rem;
+}
+
+.barber-box .input-group label{
+    display: block;
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.barber-box .input-group input,
+.barber-box .input-group textarea,
+.barber-box .input-group select{
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', system-ui;
+    font-size: 0.95rem;
+}
+
+.barber-box .input-group input:focus,
+.barber-box .input-group textarea:focus,
+.barber-box .input-group select:focus{
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(244, 186, 28, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.barber-box .input-group textarea{
+    resize: vertical;
+    min-height: 100px;
+}
+
+.barber-box .input-group input[type="file"]{
+    cursor: pointer;
+}
+
+.barber-box .current-profile-image{
+    margin-top: 15px;
+    text-align: center;
+}
+
+.barber-box .current-profile-image p{
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0 0 10px 0;
+    font-weight: 500;
+}
+
+.barber-box .current-profile-image img{
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(244, 186, 28, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
 .barber-note{ color:var(--muted); font-size:0.95rem; margin-top:0.75rem; text-align:center; }
 
 @media (max-width:480px){
-    .barber-box{ padding:1rem; }
+    .auth-container{
+        padding:1rem;
+        padding-top:100px;
+    }
+    .barber-box{ 
+        padding:1.5rem; 
+        max-width: 100%;
+    }
+    .barber-box h2{
+        font-size: 1.5rem;
+    }
 }
 
 /* Unified small footer notes used on auth pages */
@@ -657,6 +771,11 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     font-size: 0.9rem;
 }
 
+/* Nombre del usuario en navbar en dorado */
+.user-greeting b{
+    color: var(--accent);
+}
+
 .user-name{
     color: var(--accent);
 }
@@ -721,7 +840,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 /* Barber panel */
 .barber-panel-wrapper{
     padding-top: 120px;
-    padding-bottom: 50px;
+    padding-bottom: 150px;
     max-width: 1000px;
     margin: 0 auto;
     min-height: 60vh;
@@ -795,6 +914,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     max-width: 1100px;
     margin: 0 auto;
     padding: 120px 1.5rem 3rem; /* espacio para navbar fija */
+    flex: 1;
 }
 
 .services-header h2 {
@@ -934,6 +1054,20 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     max-width: 1100px;
     margin: 0 auto;
     padding: 120px 1.5rem 3rem; /* espacio para navbar fija */
+    flex: 1;
+}
+
+.barber-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1.3fr);
+    gap: 2rem;
+    align-items: stretch; /* Permite que ambas columnas tengan la misma altura */
+}
+
+.barber-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 .profile-header {
@@ -945,6 +1079,8 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     border-radius: 16px;
     padding: 2rem;
     box-shadow: 0 10px 32px rgba(0,0,0,0.45);
+    /* Altura aproximada del recuadro de perfil usada para limitar la tarjeta de reseñas */
+    --profile-card-height: 380px;
 }
 
 .profile-image-container {
@@ -998,6 +1134,10 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     font-size: 1.7rem;
 }
 
+.services-catalog .catalog-title {
+    text-align: center;
+}
+
 .empty-msg {
     text-align: center;
     color: var(--muted);
@@ -1024,11 +1164,57 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     margin: 0 0 0.35rem;
     font-size: 1.1rem;
 }
+/* Scoped layout for services inside the barber detail page: keep cards their size,
+   show 2 columns on large screens and 1 on small, with 20px gap */
+.barber-detail-container .services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    justify-items: stretch;
+    align-items: start;
+}
 
-.service-desc {
-    margin: 0 0 0.4rem;
+.barber-detail-container .service-card {
+    width: 100%;
+    height: 140px; /* fixed height so all cards share identical size */
+    display: flex; /* preserve existing layout */
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center; /* center vertically the action column */
+    overflow: hidden; /* prevent internal content from expanding the card */
+}
+
+@media (max-width: 780px) {
+    .barber-detail-container .services-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Ensure content inside service-card keeps layout and truncates long descriptions */
+.barber-detail-container .service-card .service-content {
+    flex: 1 1 auto;
+    min-width: 0; /* allow truncation */
+}
+
+.barber-detail-container .service-card .service-content .service-desc {
     color: var(--muted);
     font-size: 0.92rem;
+    margin: 0.4rem 0 0.6rem;
+    line-clamp: 2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.barber-detail-container .service-card .service-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center; /* center price/button vertically */
+    gap: 0.6rem;
+    width: 170px; /* fixed column width for consistent layout */
 }
 
 .service-duration {
@@ -1069,20 +1255,76 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 
 /* ===== Reviews Section (barber-detail.html) ===== */
 .reviews-section {
-    margin-top: 3rem;
+    margin-top: 0;
+    background: rgba(255,255,255,0.03);
+    border-radius: 16px;
+    padding: 1.8rem 1.6rem;
+    box-shadow: 0 10px 32px rgba(0,0,0,0.45);
+    display: flex;                /* Hace que la tarjeta sea un contenedor flex vertical */
+    flex-direction: column;
+    min-height: 220px;            /* Espacio mínimo cuando no hay reseñas */
+    max-height: var(--profile-card-height, 380px); /* No exceder la altura del recuadro del perfil */
+    align-self: flex-start;       /* Evita que se estire más de lo necesario */
 }
 
 .reviews-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;      /* Centra el título horizontalmente */
     gap: 1rem;
     margin-bottom: 1.5rem;
+    text-align: center;
 }
 
 .reviews-header h2 {
     margin: 0;
     font-size: 1.5rem;
+}
+
+/* Lista de reseñas ocupa el espacio restante para que la tarjeta no se encoja */
+.chat-reviews-list {
+    flex: 1 1 auto;              /* Crece para ocupar el espacio disponible dentro de .reviews-section */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 120px;          /* Reservar un espacio razonable cuando hay pocas reseñas */
+    overflow-y: auto;           /* Scroll interno cuando hay muchas reseñas */
+    padding-right: 0.3rem;      /* Espacio para el scrollbar */
+}
+
+/* Soporte para posibles listas separadas de ratings y opiniones */
+.ratings-list,
+.opinions-list{
+    max-height: none;           /* Permitir que estas listas sean gestionadas por el contenedor padre */
+    overflow-y: auto;
+    padding-right: 0.3rem;
+}
+
+/* Scrollbar oscuro con acentos dorados (WebKit) */
+.chat-reviews-list::-webkit-scrollbar,
+.ratings-list::-webkit-scrollbar,
+.opinions-list::-webkit-scrollbar{
+    width: 6px;
+}
+
+.chat-reviews-list::-webkit-scrollbar-track,
+.ratings-list::-webkit-scrollbar-track,
+.opinions-list::-webkit-scrollbar-track{
+    background: rgba(255,255,255,0.02);
+    border-radius: 999px;
+}
+
+.chat-reviews-list::-webkit-scrollbar-thumb,
+.ratings-list::-webkit-scrollbar-thumb,
+.opinions-list::-webkit-scrollbar-thumb{
+    background: var(--accent);
+    border-radius: 999px;
+}
+
+.chat-reviews-list::-webkit-scrollbar-thumb:hover,
+.ratings-list::-webkit-scrollbar-thumb:hover,
+.opinions-list::-webkit-scrollbar-thumb:hover{
+    background: var(--accent-strong);
 }
 
 .reviews-list {
@@ -1128,7 +1370,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 }
 
 /* Contenedor de acciones: rating + opinión */
-.review-actions-container {
+.review-actions-container{
     margin-top: 2.5rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1138,11 +1380,12 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 
 /* Caja de calificación */
 .rating-box {
-    background: rgba(255,255,255,0.03);
+    /* Match opinion-box style: subtle dark background, no colored border */
+    background: rgba(255,255,255,0.02);
     border-radius: 16px;
     padding: 1.6rem 1.7rem 1.9rem;
-    border: 1px solid rgba(244,186,28,0.55);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+    border: none;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.45);
     text-align: center;
 }
 
@@ -1178,8 +1421,29 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 }
 
 .rating-form .btn-primary {
+    /* Use visual style of .btn-secondary but keep size constraints */
     width: 100%;
     max-width: 260px;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    padding: 0.8rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: none;
+    transition: all var(--transition);
+}
+
+/* Hover específico para el botón de envío dentro del formulario de calificación:
+   oscurece el dorado y evita cualquier movimiento (sin translate). */
+.rating-form .btn-primary:hover {
+    /* Match .btn-secondary hover: solid accent background and dark text */
+    background: var(--accent);
+    color: var(--bg);
+    filter: none;
+    transform: none !important;
+    box-shadow: none;
 }
 
 /* Caja de opinión */
@@ -1244,6 +1508,11 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     text-decoration: underline;
 }
 
+/* Sección inferior para acciones de reseñas (calificar y opinar) */
+.review-actions-section {
+    margin-top: 3rem;
+}
+
 /* Alertas para mensajes de éxito y error en reseñas */
 .alert-success,
 .alert-error {
@@ -1270,13 +1539,26 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .review-actions-container {
         grid-template-columns: 1fr;
     }
-    
+
     .rating-form {
         align-items: stretch;
+    }
+
+    .barber-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-header {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .profile-info {
+        margin-top: 1rem;
     }
 }
 
@@ -1309,6 +1591,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     max-width: 1000px;
     margin: 0 auto;
     padding: 120px 1.5rem 3rem; /* espacio para navbar fija */
+    flex: 1;
 }
 
 .schedule-header {
@@ -1507,6 +1790,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     max-width: 900px;
     margin: 0 auto;
     padding: 120px 1.5rem 3rem; /* espacio para navbar fija */
+    flex: 1;
 }
 
 .booking-header {
@@ -1532,6 +1816,11 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     gap: 2rem;
 }
 
+.barber-name-highlight {
+    color: var(--accent);
+    font-weight: 700;
+}
+
 .booking-summary {
     background: rgba(255,255,255,0.05);
     border-radius: 16px;
@@ -1545,18 +1834,22 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 
 .summary-item {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 0.25rem;
     font-size: 0.95rem;
 }
 
 .summary-item .label {
     color: var(--muted);
+    font-size: 0.9rem;
 }
 
 .summary-item .value {
     color: var(--text);
-    font-weight: 500;
+    font-weight: 700;
+    font-size: 1rem;
 }
 
 .summary-item .price {
@@ -1655,10 +1948,14 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 .reservations-container {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 120px 1.5rem 3rem;
+    padding: 120px 1.5rem 40px;
     background-color: #0b0b0d;
     color: #e9eef2;
-    min-height: 60vh;
+    flex: 1 0 auto;
+}
+
+.table-responsive {
+    margin-bottom: 3rem;
 }
 
 .reservations-section .section-header h2 {
@@ -1830,6 +2127,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     max-width: 1100px;
     margin: 0 auto;
     padding: 120px 1.5rem 3rem;
+    flex: 1;
 }
 
 .appointments-section {
@@ -1933,26 +2231,46 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
 
 .card-actions {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 10px;
     min-width: 120px;
 }
 
-.btn-cancel-small {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    font-size: 0.8rem;
-    font-weight: 600;
+.btn-action-icon {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
     cursor: pointer;
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    transition: color 0.2s ease, background-color 0.2s ease;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition);
+    text-decoration: none;
+}
+
+.btn-whatsapp {
+    border: 1px solid #25D366;
+    color: #25D366;
+    background: transparent;
+}
+
+.btn-whatsapp:hover {
+    background-color: #25D366;
+    color: #ffffff;
+}
+
+.btn-cancel-small {
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    background: transparent;
 }
 
 .btn-cancel-small:hover {
-    color: #ff4d4d;
-    background-color: rgba(255, 77, 77, 0.12);
+    background-color: #ff4d4d;
+    color: #ffffff;
 }
 
 @media (max-width: 780px) {
@@ -1986,6 +2304,7 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     margin: 0 auto;
     padding: 120px 1.5rem 3rem; /* espacio para navbar fija */
     min-height: 60vh;
+    flex: 1;
 }
 
 .section-header {
@@ -2176,4 +2495,228 @@ nav.menu a:hover{ color:var(--accent); transform: translateY(-3px); }
     padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
+}
+
+/* =============================
+   CUSTOM MODAL (barber-detail.html)
+   ============================= */
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0 */
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: none; /* controlled by JS; show using .active or similar */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.custom-modal-overlay.active,
+.custom-modal-overlay[aria-hidden="false"] {
+    display: flex;
+}
+
+.custom-modal-box {
+    background: #1a1a1d;
+    color: var(--text);
+    border-radius: 12px;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.6);
+    border: 1px solid rgba(244,186,28,0.18); /* subtle gold border */
+    padding: 1.6rem;
+    max-width: 720px;
+    width: calc(100% - 48px);
+    text-align: center;
+    transform: translateZ(0);
+}
+
+.custom-modal-box h2,
+.custom-modal-box h3,
+.custom-modal-box p {
+    margin: 0 0 0.75rem;
+}
+
+.custom-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Modal buttons */
+.btn-modal-primary {
+    background: var(--accent);
+    color: #0b0b0d;
+    padding: 0.65rem 1.2rem;
+    border-radius: 999px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.18s ease, box-shadow 0.18s ease;
+}
+
+.btn-modal-primary:hover {
+    filter: brightness(0.95);
+    box-shadow: 0 10px 30px rgba(244,186,28,0.12);
+}
+
+.btn-modal-secondary {
+    background: transparent;
+    color: var(--text);
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-modal-secondary:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+@media (max-width: 480px) {
+    .custom-modal-box { width: calc(100% - 28px); padding: 1.1rem; }
+    .custom-modal-actions { gap: 0.5rem; }
+}
+
+/* =============================
+   MAP MODAL & BUTTON STYLES
+   (barber-detail.html map section)
+   ============================= */
+
+/* Map view button - small, elegant, next to address */
+.btn-view-map {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    margin-left: 0.5rem;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition);
+}
+
+.btn-view-map:hover {
+    background: var(--accent);
+    color: var(--bg);
+    transform: translateY(-1px);
+}
+
+.btn-view-map i {
+    font-size: 0.9rem;
+}
+
+/* Map modal - larger than confirmation modal for map display */
+.map-modal-box {
+    background: #1a1a1d;
+    color: var(--text);
+    border-radius: 12px;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.6);
+    border: 1px solid rgba(244,186,28,0.18);
+    padding: 1.6rem;
+    max-width: 500px;
+    width: calc(100% - 48px);
+    text-align: center;
+    transform: translateZ(0);
+}
+
+.map-modal-box h3 {
+    margin: 0 0 1rem;
+    font-size: 1.3rem;
+    color: var(--text);
+}
+
+/* Container for the embedded map */
+#public-map {
+    width: 100%;
+    height: 300px;
+    border-radius: 10px;
+    border: 1px solid rgba(244,186,28,0.12);
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+}
+
+/* Google Maps button inside modal */
+.btn-open-google-maps {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 0.8rem 1.8rem;
+    border-radius: 999px;
+    border: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: filter var(--transition), box-shadow var(--transition);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-open-google-maps:hover {
+    filter: brightness(0.95);
+    box-shadow: 0 10px 30px rgba(244,186,28,0.15);
+}
+
+.btn-open-google-maps i {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Map modal actions (close button if needed) */
+.map-modal-actions {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Ensure buttons inside map modal have proper spacing */
+.map-modal-box .modal-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.map-modal-box .modal-actions .btn-modal-primary,
+.map-modal-box .modal-actions .btn-modal-secondary {
+    flex: 0 1 auto;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .map-modal-box {
+        width: calc(100% - 28px);
+        padding: 1.1rem;
+        max-width: 100%;
+    }
+    
+    #public-map {
+        height: 250px;
+    }
+    
+    .btn-open-google-maps {
+        width: 100%;
+    }
+}
+
+/* Corrección forzada para la página de configuración del barbero */
+body.barber-setup-page main.auth-container {
+    padding-top: 160px !important;
+    align-items: flex-start !important;
+    padding-bottom: 48px !important;
+}
+
+body:has(.barber-box) main.auth-container {
+    padding-top: 160px !important;
+    align-items: flex-start !important;
+    padding-bottom: 48px !important;
 }

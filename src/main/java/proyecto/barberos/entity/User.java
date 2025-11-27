@@ -33,6 +33,9 @@ public class User {
     @Column(name = "created_at")
     private Date createdAt;
 
+    @Column(unique = true) // No le ponemos nullable=false porque al registrarse estará vacío
+private String phone;
+
     // --- CONSTRUCTORES ---
 
     public User() {
@@ -47,6 +50,7 @@ public class User {
         this.password = password;
         this.role = role;
         this.createdAt = new Date();
+        this.phone = phone;
     }
 
     // --- GETTERS Y SETTERS ---
@@ -106,4 +110,7 @@ public class User {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getPhone() { return phone; }
+public void setPhone(String phone) { this.phone = phone; }
 }

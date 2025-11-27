@@ -41,34 +41,63 @@ public class AppointmentService {
         appointmentRepository.save(cita);
     }
 
-    // --- NUEVO: CANCELAR CITA CON REGLA DE 1 HORA ---
-    public void cancelarCita(Long citaId, String motivo) throws Exception {
+   // --- MODIFICADO: CANCELAR CITA (Oculta automáticamente al que cancela) ---
+    public void cancelarCita(Long citaId, String motivo, User quienCancela) throws Exception {
         Optional<Appointment> citaOpt = appointmentRepository.findById(citaId);
         
         if (citaOpt.isPresent()) {
             Appointment cita = citaOpt.get();
             
-            // 1. Validar tiempo: Hora Actual + 1 hora > Hora de la Cita?
-            // Si son las 13:00 y la cita es a las 14:00, plusHours(1) da 14:00. 
-            // Si es igual o mayor, ya no se puede cancelar (es muy tarde).
+            // Regla: Cancelar con 1 hora de anticipación
             LocalDateTime horaLimite = LocalDateTime.now().plusHours(1);
             
             if (horaLimite.isAfter(cita.getAppointmentDate())) {
-                throw new Exception("Lo sentimos, debes cancelar con al menos 1 hora de anticipación.");
+                // AQUI ESTA EL CAMBIO: Mensaje según el rol
+                if ("BARBER".equals(quienCancela.getRole())) {
+                    throw new Exception("Lo siento, es demasiado tarde para cancelar esta cita, contactate directamente con el cliente.");
+                } else {
+                    throw new Exception("Lo siento, es demasiado tarde para cancelar esta cita, contactate directamente con el barbero");
+                }
             }
 
-            // 2. Proceder a cancelar
             cita.setStatus("CANCELLED");
             cita.setCancellationReason(motivo);
+            
+            // Ocultar cita automáticamente para quien cancela
+            if ("CLIENT".equals(quienCancela.getRole())) {
+                cita.setVisibleToClient(false);
+            } else if ("BARBER".equals(quienCancela.getRole())) {
+                cita.setVisibleToBarber(false);
+            }
+
             appointmentRepository.save(cita);
         } else {
             throw new Exception("Cita no encontrada");
         }
     }
 
+    // --- NUEVO: OCULTAR CITA MANUALMENTE (Botón X) ---
+    public void ocultarCita(Long citaId, User quienOculta) {
+        Optional<Appointment> citaOpt = appointmentRepository.findById(citaId);
+        if (citaOpt.isPresent()) {
+            Appointment cita = citaOpt.get();
+            
+            if ("CLIENT".equals(quienOculta.getRole())) {
+                cita.setVisibleToClient(false);
+            } else if ("BARBER".equals(quienOculta.getRole())) {
+                cita.setVisibleToBarber(false);
+            }
+            appointmentRepository.save(cita);
+        }
+    }
+
     // --- LÓGICA MAESTRA: CALCULAR HUECOS ---
     public List<LocalTime> obtenerHorasDisponibles(BarberProfile barbero, LocalDate fecha, int duracionServicioMinutos) {
         List<LocalTime> huecosLibres = new ArrayList<>();
+
+        if (fecha.isBefore(LocalDate.now())) {
+            return huecosLibres;
+        }
 
         int diaSemana = fecha.getDayOfWeek().getValue(); 
         List<Availability> horarios = availabilityRepository.findByBarberIdOrderByDayOfWeekAsc(barbero.getId());
@@ -129,11 +158,18 @@ public class AppointmentService {
         return huecosLibres;
     }
     
-    public List<Appointment> obtenerCitasPorCliente(Long clientId) {
-        return appointmentRepository.findByClientIdOrderByAppointmentDateDesc(clientId);
+    // --- ACTUALIZA ESTAS LLAMADAS EN LOS MÉTODOS DE ABAJO ---
+   public List<Appointment> obtenerCitasPorCliente(Long clientId) {
+        // Calculamos la hora de corte: "Hace 5 minutos"
+        LocalDateTime horaCorte = LocalDateTime.now().minusMinutes(5);
+        
+        return appointmentRepository.findByClientIdAndVisibleToClientTrueAndAppointmentDateAfterOrderByAppointmentDateDesc(clientId, horaCorte);
     }
     
     public List<Appointment> obtenerCitasPorBarbero(Long barberId) {
-        return appointmentRepository.findByBarberIdOrderByAppointmentDateDesc(barberId);
+        // Calculamos la hora de corte: "Hace 5 minutos"
+        LocalDateTime horaCorte = LocalDateTime.now().minusMinutes(5);
+        
+        return appointmentRepository.findByBarberIdAndVisibleToBarberTrueAndAppointmentDateAfterOrderByAppointmentDateDesc(barberId, horaCorte);
     }
 }

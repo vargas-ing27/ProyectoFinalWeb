@@ -21,14 +21,15 @@ public class BarberProfile {
     @Column(columnDefinition = "TEXT")
     private String bio; // Descripción
 
-    @Column(nullable = false)
-    private String address; // Dirección
-
     @Column(name = "profile_image_url")
     private String profileImageUrl; // URL Foto
 
     // --- NUEVO: AQUÍ GUARDAMOS EL TELÉFONO AHORA ---
     private String phone;
+
+    // --- NUEVOS CAMPOS PARA EL MAPA ---
+    private Double latitude;
+    private Double longitude;
 
     // --- CONSTRUCTORES ---
 
@@ -40,9 +41,10 @@ public class BarberProfile {
         this.user = user;
         this.shopName = shopName;
         this.bio = bio;
-        this.address = address;
         this.profileImageUrl = profileImageUrl;
         this.phone = phone;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     // --- GETTERS Y SETTERS ---
@@ -79,14 +81,6 @@ public class BarberProfile {
         this.bio = bio;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public String getProfileImageUrl() {
         return profileImageUrl;
     }
@@ -103,4 +97,11 @@ public class BarberProfile {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
+    // --- NUEVOS GETTERS Y SETTERS ---
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

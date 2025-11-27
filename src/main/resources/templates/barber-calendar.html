@@ -21,6 +21,7 @@
                 <li><a th:href="@{/barber/services}">Mis Servicios</a></li>
                 <li><a th:href="@{/barber/schedule}">Mi Agenda</a></li>
                 <li><a href="#" class="nav-link active">Citas Agendadas</a></li>
+                <li><a th:href="@{/reviews/mis-resenas}">Reseñas</a></li>
             </ul>
         </nav>
         <div class="buttons">
@@ -86,15 +87,34 @@
                         </div>
                     </div>
 
-                    <div class="card-actions">
-                        <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post" onsubmit="return confirmarCancelacion(event)">
-                            <input type="hidden" name="citaId" th:value="${cita.id}">
-                            <input type="hidden" name="motivo" class="input-motivo">
-                            <input type="hidden" name="redirectUrl" value="/barber/calendar">
-                            
-                            <button type="submit" class="btn-cancel-small">Cancelar Cita</button>
-                        </form>
-                    </div>
+                    <div class="card-actions" style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+
+    <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post" onsubmit="return confirmarCancelacion(event)">
+        <input type="hidden" name="citaId" th:value="${cita.id}">
+        <input type="hidden" name="motivo" class="input-motivo">
+        <input type="hidden" name="redirectUrl" value="/barber/calendar">
+        
+        <button type="submit" class="btn-action-icon btn-cancel-small">
+            Cancelar
+        </button>
+    </form>
+
+    <form th:if="${cita.status == 'CANCELLED'}" th:action="@{/booking/hide}" method="post">
+        <input type="hidden" name="citaId" th:value="${cita.id}">
+        <input type="hidden" name="redirectUrl" value="/barber/calendar">
+        <button type="submit" class="btn-hide" title="Quitar de la lista">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </form>
+
+    <a th:if="${cita.client.phone != null}"
+       th:href="'https://wa.me/57' + ${cita.client.phone} + '?text=Hola%20' + ${cita.client.fullName} + ',%20te%20escribo%20desde%20MiBarbero.'"
+       target="_blank"
+       class="btn-action-icon btn-whatsapp"
+       title="Contactar por WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i> <span style="font-size: 0.9rem;">Contactar</span>
+    </a>
+</div>
                 </article>
 
             </div>

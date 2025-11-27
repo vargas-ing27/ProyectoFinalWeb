@@ -16,6 +16,10 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder; // <--- Inyectamos la herramienta de encriptación
 
+    public void actualizarUsuario(User user) {
+    userRepository.save(user);
+}
+
     // Lógica para registrar
     public User registrarUsuario(User user) throws Exception {
         if (userRepository.existsByEmail(user.getEmail())) {

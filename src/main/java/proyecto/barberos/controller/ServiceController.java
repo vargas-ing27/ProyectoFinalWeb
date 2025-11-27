@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.User;
@@ -93,10 +94,18 @@ public class ServiceController {
         return "redirect:/barber/services";
     }
 
-    // 4. Eliminar
-    @GetMapping("/delete/{id}")
-    public String eliminarServicio(@PathVariable Long id) {
-        serviciosService.eliminarServicio(id);
+   @GetMapping("/delete/{id}")
+    public String eliminarServicio(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            // Intentamos borrar
+            serviciosService.eliminarServicio(id);
+            redirectAttributes.addFlashAttribute("exito", "Servicio eliminado correctamente.");
+        } catch (Exception e) {
+            // Si falla (por ejemplo, porque tiene citas agendadas), mostramos TU mensaje
+            redirectAttributes.addFlashAttribute("error", "No puedes borrar el servicio, tienes citas agendadas.");
+        }
+        
+        // Volvemos a la lista
         return "redirect:/barber/services";
     }
 }

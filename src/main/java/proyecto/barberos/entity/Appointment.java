@@ -37,6 +37,13 @@ public class Appointment {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
 
+    // NUEVOS CAMPOS DE VISIBILIDAD
+    @Column(nullable = false)
+    private boolean visibleToClient = true; // Por defecto el cliente la ve
+
+    @Column(nullable = false)
+    private boolean visibleToBarber = true; // Por defecto el barbero la ve
+
     public Appointment() {}
 
     // --- GETTERS Y SETTERS ---
@@ -64,4 +71,10 @@ public class Appointment {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public boolean isVisibleToClient() { return visibleToClient; }
+    public void setVisibleToClient(boolean visibleToClient) { this.visibleToClient = visibleToClient; }
+
+    public boolean isVisibleToBarber() { return visibleToBarber; }
+    public void setVisibleToBarber(boolean visibleToBarber) { this.visibleToBarber = visibleToBarber; }
 }

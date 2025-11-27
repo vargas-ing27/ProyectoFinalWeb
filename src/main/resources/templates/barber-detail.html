@@ -6,32 +6,40 @@
     <title th:text="${barbero.shopName} + ' - Detalles'">Detalle Barbero</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
 </head>
 <body>
 
-    <header class="navbar">
+    <header class="navbar" id="mainNavbar">
         <div class="logo">
             <a th:href="@{/home}">
                 <img th:src="@{/images/logonofondo.png}" alt="Logo">
             </a>
         </div>
+        
         <nav class="menu">
             <ul>
                 <li><a th:href="@{/home}">Inicio</a></li>
                 <li><a th:href="@{/home#barberos}">Barberos</a></li>
+                
                 <li>
                     <a th:if="${isLoggedIn}" th:href="@{/booking/mis-reservas}">Mis Reservas</a>
-                    <a th:if="${!isLoggedIn}" th:href="@{/login}">Mis Citas</a>
+                    <a th:if="${!isLoggedIn}" th:href="@{/login}">Mis Reservas</a>
                 </li>
             </ul>
         </nav>
+        
         <div class="buttons">
             <div th:if="${!isLoggedIn}" style="display:flex; gap:10px;">
                 <a th:href="@{/login}" class="btn-login">Iniciar Sesión</a>
                 <a th:href="@{/register}" class="btn-register">Registrarse</a>
             </div>
+
             <div th:if="${isLoggedIn}" class="user-info">
-                <span style="color: var(--muted); font-size: 0.9rem;">
+                <span class="user-greeting">
                     Hola, <b th:text="${usuario.fullName}">User</b>
                 </span>
                 <a th:href="@{/logout}" class="btn-login">Salir</a>
@@ -40,120 +48,113 @@
     </header>
 
     <main class="barber-detail-container" style="padding-top: 100px;"> 
-        
-        <section class="profile-header">
-            <div class="profile-image-container">
-                <img th:if="${barbero.profileImageUrl != null}" th:src="@{${barbero.profileImageUrl}}" alt="Foto Barbero" class="profile-img-lg">
-                <img th:if="${barbero.profileImageUrl == null}" th:src="@{/images/fotoperfil.png}" alt="Default" class="profile-img-lg">
+        <div class="barber-detail-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+            <div class="barber-main-column">
+                <section class="profile-header">
+                    <div class="profile-image-container">
+                        <img th:if="${barbero.profileImageUrl != null}" th:src="@{${barbero.profileImageUrl}}" alt="Foto Barbero" class="profile-img-lg">
+                        <img th:if="${barbero.profileImageUrl == null}" th:src="@{/images/fotoperfil.png}" alt="Default" class="profile-img-lg">
+                    </div>
+                    
+                    <div class="profile-info">
+                        <h1 th:text="${barbero.user.fullName}" class="barber-name">Nombre Barbero</h1>
+                        <h3 th:text="${barbero.shopName}">Nombre Barbería</h3>
+                        
+                        
+                        <button type="button" class="btn-view-map" onclick="openMapModal()" style="background:transparent; border:1px solid #f4ba1c; color:#f4ba1c; padding:5px 10px; border-radius:5px; cursor:pointer; margin-bottom:10px; font-size:0.9rem;">
+                    <i class="fa-solid fa-map-location-dot"></i> Ver Ubicación
+                </button>
+                        <p class="phone" style="display: flex; align-items: center; gap: 10px;">
+    <i class="fa-solid fa-phone" style="color: #9aa3ad;"></i>
+    
+    <span th:text="${barbero.phone}">300...</span>
+</p>
+
+                        <a th:if="${barbero.phone != null}"
+   th:href="'https://wa.me/57' + ${barbero.phone} + '?text=Hola,%20quisiera%20hacer%20una%20consulta%20sobre%20un%20servicio.'"
+   target="_blank"
+   style="background:transparent; border:1px solid #25D366; color:#25D366; padding:5px 10px; border-radius:5px; cursor:pointer; margin-bottom:10px; text-decoration: none; display: inline-block; margin-right: 5px; font-size: 0.9rem;">
+    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+</a>
+                        
+                        <p class="bio" th:text="${barbero.bio}">Descripción...</p>
+                    </div>
+                </section>
+
+                <hr class="divider">
+
+                <section class="services-catalog">
+                    <h2 class="catalog-title">Servicios Disponibles</h2>
+                    
+                    <p th:if="${servicios.empty}" class="empty-msg">Este barbero aún no ha publicado sus servicios.</p>
+
+                    <div class="services-grid" th:if="${!servicios.empty}">
+                        <article class="service-card" th:each="servicio : ${servicios}">
+                            <div class="service-content">
+                                <h3 th:text="${servicio.name}">Corte</h3>
+                                <p class="service-desc" th:text="${servicio.description}">Desc</p>
+                                <span class="service-duration" th:text="'⏱ ' + ${servicio.durationMinutes} + ' min'">30 min</span>
+                            </div>
+                            <div class="service-action">
+                                <p class="price" th:text="'$ ' + ${#numbers.formatInteger(servicio.price, 0, 'POINT')}">$ 20.000</p>
+                                <a th:if="${isLoggedIn}" 
+                                   th:href="@{/booking/{bid}/{sid}(bid=${barbero.id}, sid=${servicio.id})}" 
+                                   class="btn-secondary btn-book">Reservar</a>
+                                <a th:if="${!isLoggedIn}" 
+                                   th:href="@{/login}" 
+                                   class="btn-secondary btn-book">Reservar</a>
+                            </div>
+                        </article>
+                    </div>
+                </section>
             </div>
-            
-            <div class="profile-info">
-                <h1 th:text="${barbero.user.fullName}">Nombre del barbero</h1>
-                
-                <div class="barber-meta" style="display: flex; align-items: center; gap: 10px;">
-                    <h3 th:text="${barbero.shopName}" class="barber-name" style="margin: 0;">Nombre de la barberia</h3>
-                    <div class="rating-display" style="color: #f4ba1c; font-weight: bold;">
-                        <i class="fa-solid fa-star"></i>
-                        <span th:text="${promedio}">0.0</span>
-                        <span style="color: gray; font-weight: normal; font-size: 0.9rem;" th:text="'(' + ${resenas.size()} + ')'"></span>
+
+            <section class="reviews-section">
+                <div class="reviews-header">
+                    <h2>Reseñas</h2>
+                    
+                    <div th:if="${exito}" class="alert-success">
+                        <span th:text="${exito}">Operación exitosa</span>
+                    </div>
+                    <div th:if="${error}" class="alert-error">
+                        <span th:text="${error}">Error</span>
                     </div>
                 </div>
-                
-                <p class="address" th:text="'📍 ' + ${barbero.address}">Dirección</p>
-                <p class="phone" th:text="'📞 ' + ${barbero.phone}">Teléfono</p>
-                <p class="bio" th:text="${barbero.bio}">Descripción...</p>
-            </div>
-        </section>
 
-        <hr class="divider">
+                <div class="chat-reviews-list">
+                    
+                    <p th:if="${resenas.empty}" class="empty-msg">No hay reseñas aún.</p>
 
-        <section class="services-catalog">
-            <h2 class="catalog-title">Servicios Disponibles</h2>
-            
-            <p th:if="${servicios.empty}" class="empty-msg">Este barbero aún no ha publicado sus servicios.</p>
-
-            <div class="services-grid" th:if="${!servicios.empty}">
-                <article class="service-card" th:each="servicio : ${servicios}">
-                    <div class="service-content">
-                        <h3 th:text="${servicio.name}">Corte</h3>
-                        <p class="service-desc" th:text="${servicio.description}">Desc</p>
-                        <span class="service-duration" th:text="'⏱ ' + ${servicio.durationMinutes} + ' min'">30 min</span>
-                    </div>
-                    <div class="service-action">
-                        <p class="price" th:text="'$ ' + ${#numbers.formatInteger(servicio.price, 0, 'POINT')}">$ 20.000</p>
-                        <a th:if="${isLoggedIn}" 
-                           th:href="@{/booking/{bid}/{sid}(bid=${barbero.id}, sid=${servicio.id})}" 
-                           class="btn-secondary btn-book">Reservar</a>
-                        <a th:if="${!isLoggedIn}" 
-                           th:href="@{/login}" 
-                           class="btn-secondary btn-book">Reservar</a>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <hr class="divider">
-
-        <section class="reviews-section">
-            
-            <div class="reviews-header">
-                <h2>Opiniones de Clientes</h2>
-                <div th:if="${exito}" class="alert-success"><span th:text="${exito}"></span></div>
-                <div th:if="${error}" class="alert-error"><span th:text="${error}"></span></div>
-            </div>
-
-            <div class="ratings-only-section">
-                <h3>Calificaciones</h3>
-                <ul class="ratings-list">
-                    <li th:each="review : ${resenas}" 
-                        th:if="${review.rating > 0 and (review.comment == null or review.comment == '')}" 
-                        class="rating-item">
+                    <div th:each="review : ${resenas}" class="chat-review-item">
                         
-                        <div class="rating-info">
-                            <strong th:text="${review.client.fullName}">Cliente</strong>
-                            <span class="stars">
+                        <div class="chat-content-wrapper">
+                            <strong class="chat-author" th:text="${review.client.fullName}">Usuario</strong><span class="chat-separator">:</span>
+                            
+                            <span th:if="${review.comment != null and review.comment != ''}" 
+                                  th:text="${review.comment}" 
+                                  class="chat-text">Opinión</span>
+
+                            <span th:if="${review.rating > 0}" class="chat-stars">
                                 <span th:each="i : ${#numbers.sequence(1, review.rating)}"><i class="fa-solid fa-star"></i></span>
+                            </span>
+
+                            <span th:if="${isLoggedIn and usuario.id == review.client.id}" class="chat-delete-action" style="margin-left: 10px;">
+                                <form th:action="@{/reviews/delete/{id}(id=${review.id})}" method="post" class="delete-review-form">
+                                    <input type="hidden" name="barberId" th:value="${barbero.id}">
+                                    <button type="button" class="btn-chat-delete" title="Eliminar" onclick="openDeleteModal(this)" style="background: none; border: none; color: #666; cursor: pointer;">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
                             </span>
                         </div>
 
-                        <div th:if="${isLoggedIn and usuario.id == review.client.id}" class="delete-action">
-                            <form th:action="@{/reviews/delete/{id}(id=${review.id})}" method="post" onsubmit="return confirm('¿Eliminar tu calificación?');">
-                                <input type="hidden" name="barberId" th:value="${barbero.id}">
-                                <button type="submit" class="btn-delete-icon"><i class="fa-solid fa-trash-can"></i></button>
-                            </form>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-
-            <hr class="divider-small">
-
-            <div class="opinions-section">
-                <h3>Opiniones Escritas</h3>
-                <div class="opinions-list">
-                    <div th:each="review : ${resenas}" 
-                         th:if="${review.comment != null and review.comment != ''}" 
-                         class="review-card opinion-card">
-                        
-                        <div class="review-header">
-                            <strong th:text="${review.client.fullName}">Usuario</strong>
-                            <div th:if="${isLoggedIn and usuario.id == review.client.id}" class="delete-action-card">
-                                <form th:action="@{/reviews/delete/{id}(id=${review.id})}" method="post" onsubmit="return confirm('¿Eliminar tu opinión?');">
-                                    <input type="hidden" name="barberId" th:value="${barbero.id}">
-                                    <button type="submit" class="btn-delete-text">Eliminar</button>
-                                </form>
-                            </div>
-                            <div class="review-rating" th:if="${review.rating > 0}">
-                                <span th:each="i : ${#numbers.sequence(1, review.rating)}"><i class="fa-solid fa-star"></i></span>
-                            </div>
-                        </div>
-                        
-                        <p th:text="${review.comment}" class="review-text">...</p>
-                        <small th:text="${#dates.format(review.createdAt, 'dd/MM/yyyy')}" class="review-date">Fecha</small>
                     </div>
                 </div>
-            </div>
+            </section>
 
+        </div>
+
+        <section class="review-actions-section">
             <div th:if="${isLoggedIn}" class="review-actions-container">
                 <div class="rating-box">
                     <h3 th:text="'Calificar a ' + ${barbero.user.fullName}">Calificar</h3>
@@ -188,6 +189,18 @@
         </section>
 
     </main>
+    <div id="mapModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box map-modal-box" style="width: 90%; max-width: 600px;">
+            <h3 style="color:white; margin-bottom:15px;">Ubicación</h3>
+            <div id="public-map" style="height: 350px; width: 100%; border-radius: 8px; margin-bottom: 15px;"></div>
+            <div class="modal-actions">
+                <a id="gmaps-link" href="#" target="_blank" class="btn-modal-primary" style="text-decoration:none; display:flex; align-items:center; gap:5px;">
+                    <i class="fa-solid fa-map-location-dot"></i> Abrir en Google Maps
+                </a>
+                <button onclick="closeMapModal()" class="btn-modal-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer-minimal">
         <div class="footer-minimal-container">
@@ -199,6 +212,142 @@
             </div>
         </div>
     </footer>
+
+    <div id="deleteModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <h3>¿Deseas borrar esta reseña?</h3>
+            <div class="modal-actions">
+                <button id="btnCancelDelete" class="btn-modal-secondary">No</button>
+                <button id="btnConfirmDelete" class="btn-modal-primary">Si</button>
+            </div>
+        </div>
+    </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+        
+        // --- 1. LÓGICA DEL MAPA ---
+        var latDb = /*[[${barbero.latitude}]]*/ null;
+        var lngDb = /*[[${barbero.longitude}]]*/ null;
+        var shopName = [[${barbero.shopName}]];
+
+        // Si no hay coordenadas, usamos Neiva por defecto
+        var barberLat = (latDb !== null) ? latDb : 2.9273;
+        var barberLng = (lngDb !== null) ? lngDb : -75.2819;
+
+        var mapInitialized = false;
+        var publicMap;
+        const mapModal = document.getElementById('mapModal');
+        const gmapsLink = document.getElementById('gmaps-link');
+
+        function openMapModal() {
+            mapModal.style.display = 'flex';
+            
+            // URL CORRECTA: Usamos la estándar de Google Maps
+            gmapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' + barberLat + ',' + barberLng;
+
+            if (!mapInitialized) {
+                publicMap = L.map('public-map').setView([barberLat, barberLng], 16);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(publicMap);
+
+                L.marker([barberLat, barberLng]).addTo(publicMap)
+                    .bindPopup('<b>' + shopName + '</b>')
+                    .openPopup();
+
+                mapInitialized = true;
+            }
+            
+            // Fix visual para que el mapa cargue completo
+            setTimeout(function() {
+                publicMap.invalidateSize();
+            }, 200);
+        }
+
+        function closeMapModal() {
+            mapModal.style.display = 'none';
+        }
+
+        // --- 2. CERRAR MODALES AL CLIC FUERA ---
+        window.addEventListener('click', function(e) {
+            const deleteModal = document.getElementById('deleteModal');
+            if (e.target === mapModal) closeMapModal();
+            if (deleteModal && e.target === deleteModal) deleteModal.style.display = 'none';
+        });
+    </script>
+
+    <script>
+        // 1. Lógica del Modal de Borrado (NUEVO)
+        let formToDelete = null;
+        const modal = document.getElementById('deleteModal');
+
+        function openDeleteModal(button) {
+            // Encuentra el formulario más cercano al botón que se clickeó
+            formToDelete = button.closest('form');
+            // Muestra el modal (Windsurf le dará estilo flex/grid)
+            modal.style.display = 'flex';
+        }
+
+        // Botón NO
+        document.getElementById('btnCancelDelete').addEventListener('click', () => {
+            modal.style.display = 'none';
+            formToDelete = null;
+        });
+
+        // Botón SI
+        document.getElementById('btnConfirmDelete').addEventListener('click', () => {
+            if (formToDelete) {
+                formToDelete.submit();
+            }
+        });
+
+        // Cerrar al hacer clic fuera
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // 2. Ocultar alertas automáticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertas = document.querySelectorAll('.alert-success, .alert-error');
+            
+            if (alertas.length > 0) {
+                setTimeout(function() {
+                    alertas.forEach(alerta => {
+                        alerta.style.transition = "opacity 0.5s ease";
+                        alerta.style.opacity = "0";
+                        setTimeout(() => alerta.remove(), 500);
+                    });
+                }, 3000);
+            }
+        });
+    </script>
+
+<script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
+    
 
 </body>
 </html>

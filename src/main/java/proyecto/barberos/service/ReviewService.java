@@ -42,8 +42,8 @@ public class ReviewService {
             nuevaReview.setClient(cliente);
             nuevaReview.setBarber(barbero);
             
-            // Si no mandó rating (solo comentario), ponemos 5 por defecto o 0
-            nuevaReview.setRating(rating != null ? rating : 5); 
+            // Si rating es null, ponemos 0 (o null, según prefieras, pero 0 es más fácil de manejar en la vista)
+            nuevaReview.setRating(rating != null ? rating : 0);
             
             // Si mandó comentario
             nuevaReview.setComment(comment != null ? comment : "");

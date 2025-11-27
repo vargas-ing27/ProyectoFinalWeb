@@ -5,10 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurar Perfil</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
     
-  <header class="navbar">
+    <style>
+        #mapid { 
+            height: 350px; 
+            width: 100%; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+            border: 1.5px solid rgba(244, 186, 28, 0.2);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="barber-setup-page">
+    
+  <header class="navbar" id="mainNavbar">
         <div class="logo">
             <a th:if="${perfil.id != null}" th:href="@{/home}">
                 <img th:src="@{/images/logonofondo.png}" alt="Logo">
@@ -32,11 +47,10 @@
         </nav>
     </header>
 
-    <main class="auth-container" style="padding-top: 100px;">
+    <main class="auth-container">
         <div class="barber-box">
             
-            <h2 style="text-align: center; margin-bottom: 20px;" 
-                th:text="${perfil.id != null} ? 'Tu Perfil Profesional' : '¡Bienvenido, colega!'">
+            <h2 th:text="${perfil.id != null} ? 'Tu Perfil Profesional' : '¡Bienvenido, colega!'">
                 Configurar Perfil
             </h2>
 
@@ -48,19 +62,14 @@
 
                 <div class="input-group">
                     <label>Nombre de la barbería:</label>
-                    <input type="text" th:field="*{shopName}" placeholder="Ej: The King Cuts" required />
-                </div>
-
-                <div class="input-group">
-                    <label>Dirección del local:</label>
-                    <input type="text" th:field="*{address}" placeholder="Ej: Calle 10 # 5-50" required />
+                    <input type="text" th:field="*{shopName}" placeholder="" required />
                 </div>
 
                 <div class="input-group">
                     <label>Teléfono de Contacto:</label>
                     <input type="tel" 
                            th:field="*{phone}" 
-                           placeholder="Ej: 3001234567" 
+                           placeholder="" 
                            maxlength="10" 
                            minlength="10"
                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
@@ -68,18 +77,27 @@
                 </div>
 
                 <div class="input-group">
+                    <label>Ubicación del local en que te encuentras (Arrastra el pin):</label>
+                    <div id="mapid"></div>
+                    
+                    <input type="hidden" id="latitude" th:field="*{latitude}" />
+                    <input type="hidden" id="longitude" th:field="*{longitude}" />
+                    
+                    <small style="color: gray;">* Mueve el marcador azul hasta la puerta de tu local.</small>
+                </div>
+
+                <div class="input-group">
                     <label>Descripción (Bio):</label>
-                    <textarea th:field="*{bio}" placeholder="Cuento con 5 años de experiencia..." rows="4" 
-                              style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;"></textarea>
+                    <textarea th:field="*{bio}" placeholder="" rows="4"></textarea>
                 </div>
 
                 <div class="input-group">
                     <label>Sube tu foto de perfil:</label>
                     <input type="file" name="imagen" accept="image/*" />
                     
-                    <div th:if="${perfil.profileImageUrl != null}" style="margin-top: 10px; text-align: center;">
-                        <p style="font-size: 0.8rem; color: gray;">Foto actual:</p>
-                        <img th:src="@{${perfil.profileImageUrl}}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                    <div th:if="${perfil.profileImageUrl != null}" class="current-profile-image">
+                        <p>Foto actual:</p>
+                        <img th:src="@{${perfil.profileImageUrl}}" alt="Foto de perfil actual">
                     </div>
                 </div>
 
@@ -88,5 +106,120 @@
         </div>
     </main>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+        
+        // 1. CONFIGURACIÓN INICIAL
+        var defaultLat = 2.9273; // Neiva
+        var defaultLng = -75.2819;
+
+        // Recuperar datos guardados
+        var latDb = /*[[${perfil.latitude}]]*/ null;
+        var lngDb = /*[[${perfil.longitude}]]*/ null;
+
+        var lat = (latDb !== null) ? latDb : defaultLat;
+        var lng = (lngDb !== null) ? lngDb : defaultLng;
+
+        var mymap = L.map('mapid').setView([lat, lng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(mymap);
+
+        var marker = L.marker([lat, lng], {draggable: true}).addTo(mymap);
+
+        // Función para actualizar los inputs ocultos
+        function updateHiddenInputs(lat, lng) {
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
+            if(latInput) latInput.value = lat;
+            if(lngInput) lngInput.value = lng;
+        }
+        
+        updateHiddenInputs(lat, lng);
+
+        // --- LÓGICA A: ARRASTRAR EL PIN -> LLENAR TEXTO ---
+        marker.on('dragend', function(event) {
+            var position = marker.getLatLng();
+            updateHiddenInputs(position.lat, position.lng);
+            
+            // Geocoding Inverso (Coordenadas -> Texto)
+            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + position.lat + '&lon=' + position.lng)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data && data.display_name) {
+                        var calle = data.address.road || "";
+                        var numero = data.address.house_number || "";
+                        var direccionFormato = (calle + " " + numero).trim();
+                        if(!direccionFormato) direccionFormato = data.display_name;
+
+                        var addrInput = document.getElementById('addressInput');
+                        if(addrInput) addrInput.value = direccionFormato;
+                    }
+                })
+                .catch(function(e) { console.log("Error obteniendo dirección", e); });
+        });
+
+        // --- LÓGICA B: ESCRIBIR TEXTO -> MOVER EL PIN ---
+        function buscarDireccionEnMapa() {
+            var addrInput = document.getElementById('addressInput');
+            if (!addrInput) return;
+            
+            var direccion = addrInput.value;
+            if (!direccion) return;
+
+            var query = direccion + ", Neiva, Huila, Colombia";
+
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query))
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data && data.length > 0) {
+                        var result = data[0];
+                        var newLat = parseFloat(result.lat);
+                        var newLng = parseFloat(result.lon);
+
+                        mymap.setView([newLat, newLng], 17);
+                        marker.setLatLng([newLat, newLng]);
+                        updateHiddenInputs(newLat, newLng);
+                    }
+                })
+                .catch(function(e) { console.log("Error buscando dirección", e); });
+        }
+
+        // Listener: Buscar al salir del campo (blur) o al cambiar (change)
+        var inputField = document.getElementById('addressInput');
+        if(inputField) {
+            inputField.addEventListener('change', buscarDireccionEnMapa);
+        }
+
+        // Fix visual Leaflet
+        setTimeout(function(){ mymap.invalidateSize()}, 400);
+
+    /*]]>*/
+    </script>
+    
+    <script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('mainNavbar');
+        const delta = 5;
+        const navbarHeight = navbar.offsetHeight;
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if(Math.abs(lastScrollTop - scrollTop) <= delta) return;
+
+            if (scrollTop > lastScrollTop && scrollTop > navbarHeight){
+                navbar.classList.add('navbar--hidden');
+            } else {
+                navbar.classList.remove('navbar--hidden');
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
 </body>
 </html>
