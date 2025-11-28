@@ -1,14 +1,21 @@
 package proyecto.barberos.controller;
 
-import jakarta.servlet.http.HttpSession;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // Importante para subir archivos
+import org.springframework.web.multipart.MultipartFile;
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.User;
 import proyecto.barberos.repository.BarberProfileRepository;
+import proyecto.barberos.repository.UserRepository;
 
 import java.util.Optional;
 import java.io.IOException;
@@ -16,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Tag(name = "Barberos", description = "API para gestión de perfiles de barberos")
 @Controller
 @RequestMapping("/barber")
 public class BarberController {
@@ -23,10 +31,22 @@ public class BarberController {
     @Autowired
     private BarberProfileRepository barberProfileRepository;
 
-    // 1. Mostrar el formulario (Crear o Editar)
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
+    }
+
+    @Operation(summary = "Mostrar formulario de configuración", description = "Muestra el formulario para crear o editar perfil de barbero")
     @GetMapping("/setup")
-    public String mostrarFormularioSetup(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    public String mostrarFormularioSetup(Model model) {
+        User user = getAuthenticatedUser();
         
         if (user == null || !"BARBER".equals(user.getRole())) {
             return "redirect:/login";
@@ -46,13 +66,15 @@ public class BarberController {
         return "barber-setup"; 
     }
 
-    // 2. Guardar perfil CON FOTO
+    @Operation(summary = "Guardar perfil de barbero", description = "Guarda o actualiza el perfil del barbero incluyendo foto")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "302", description = "Perfil guardado exitosamente")
+    })
     @PostMapping("/setup")
     public String guardarPerfil(@ModelAttribute BarberProfile perfil, 
-                                @RequestParam("imagen") MultipartFile imagen, // <-- Recibimos el archivo
-                                HttpSession session) {
+                                @Parameter(description = "Archivo de imagen del perfil") @RequestParam("imagen") MultipartFile imagen) {
         
-        User user = (User) session.getAttribute("usuarioSesion");
+        User user = getAuthenticatedUser();
         if (user == null) return "redirect:/login";
 
         // LÓGICA PARA GUARDAR LA IMAGEN
@@ -73,6 +95,17 @@ public class BarberController {
                 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        else {
+            // Verificamos si ya existe un perfil en BD con ese ID
+            if (perfil.getId() != null) {
+                Optional<BarberProfile> perfilViejo = barberProfileRepository.findById(perfil.getId());
+                if (perfilViejo.isPresent()) {
+                    // ¡Rescatamos la URL de la foto anterior!
+                    perfil.setProfileImageUrl(perfilViejo.get().getProfileImageUrl());
+                }
             }
         }
 

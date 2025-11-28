@@ -1,7 +1,12 @@
 package proyecto.barberos.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -12,11 +17,13 @@ import proyecto.barberos.entity.Service;
 import proyecto.barberos.entity.User;
 import proyecto.barberos.repository.BarberProfileRepository;
 import proyecto.barberos.repository.ServiceRepository;
+import proyecto.barberos.repository.UserRepository;
 import proyecto.barberos.service.ReviewService; // Importamos el servicio
 
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Barberos Públicos", description = "API para visualización pública de perfiles de barberos")
 @Controller
 @RequestMapping("/ver")
 public class PublicBarberController {
@@ -28,11 +35,23 @@ public class PublicBarberController {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ReviewService reviewService; // <--- Inyectamos el servicio de reseñas
 
-    // Detalle individual del barbero
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
+    }
+
+    @Operation(summary = "Ver detalle de barbero", description = "Muestra el perfil completo de un barbero con sus servicios y reseñas")
     @GetMapping("/barbero/{id}")
-    public String verDetalleBarbero(@PathVariable Long id, HttpSession session, Model model) {
+    public String verDetalleBarbero(@Parameter(description = "ID del barbero") @PathVariable Long id, Model model) {
         
         Optional<BarberProfile> perfilOpt = barberProfileRepository.findById(id);
 
@@ -53,7 +72,7 @@ public class PublicBarberController {
             model.addAttribute("promedio", promedio); // Número (ej: 4.5)
 
             // Lógica de Navbar (Usuario logueado)
-            cargarDatosUsuario(session, model);
+            cargarDatosUsuario(model);
 
             return "barber-detail"; 
         }
@@ -61,24 +80,22 @@ public class PublicBarberController {
         return "redirect:/home";
     }
 
-    // Ver todos los barberos
+    @Operation(summary = "Ver todos los barberos", description = "Muestra una lista con todos los barberos registrados")
     @GetMapping("/todos")
-    public String verTodosLosBarberos(HttpSession session, Model model) {
+    public String verTodosLosBarberos(Model model) {
         List<BarberProfile> todos = barberProfileRepository.findAllByOrderByIdAsc();
         model.addAttribute("barberos", todos);
-        cargarDatosUsuario(session, model);
+        cargarDatosUsuario(model);
         return "all-barbers"; 
     }
 
-    private void cargarDatosUsuario(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    private void cargarDatosUsuario(Model model) {
+        User user = getAuthenticatedUser();
         if (user != null) {
             model.addAttribute("usuario", user);
             model.addAttribute("isLoggedIn", true);
-            model.addAttribute("isAdmin", "ADMIN".equals(user.getRole()));
         } else {
             model.addAttribute("isLoggedIn", false);
-            model.addAttribute("isAdmin", false);
         }
     }
 }

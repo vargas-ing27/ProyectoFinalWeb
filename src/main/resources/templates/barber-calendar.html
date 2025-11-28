@@ -89,12 +89,12 @@
 
                     <div class="card-actions" style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
 
-    <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post" onsubmit="return confirmarCancelacion(event)">
+    <form th:if="${cita.status != 'CANCELLED'}" th:action="@{/booking/cancel}" method="post">
         <input type="hidden" name="citaId" th:value="${cita.id}">
-        <input type="hidden" name="motivo" class="input-motivo">
+        <input type="hidden" name="motivo" class="input-motivo hidden-motivo">
         <input type="hidden" name="redirectUrl" value="/barber/calendar">
         
-        <button type="submit" class="btn-action-icon btn-cancel-small">
+        <button type="button" class="btn-action-icon btn-cancel-small" onclick="openCancelModal(this)">
             Cancelar
         </button>
     </form>
@@ -143,22 +143,91 @@
     </div>
 </footer>
 
-    <script>
-        // Script para cancelar con motivo
-        function confirmarCancelacion(event) {
-            event.preventDefault();
-            const form = event.target;
-            const motivoInput = form.querySelector('.input-motivo');
-            const motivo = prompt("Indica el motivo de la cancelación para el cliente:");
+    <!-- Modal de Cancelación Elegante -->
+    <div id="cancelModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <h3 style="color: #f4ba1c;">Cancelar Reserva</h3>
+            <p style="color: #ccc; margin-bottom: 15px;">Por favor, indica el motivo de la cancelación:</p>
             
-            if (motivo && motivo.trim().length >= 5) {
-                motivoInput.value = motivo;
-                form.submit();
-            } else if (motivo !== null) {
-                 alert("Debes ingresar un motivo válido.");
-            }
+            <textarea id="modalMotivoInput" rows="3" placeholder="" 
+                      style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; margin-bottom: 20px;"></textarea>
+            
+            <div id="modalError" style="color: #ff6b6b; display: none; margin-bottom: 10px; font-size: 0.9rem;"> Escribe al menos 5 letras.</div>
+
+            <div class="modal-actions">
+                <button id="btnCloseCancel" class="btn-modal-secondary">Cerrar</button>
+                <button id="btnConfirmCancel" class="btn-modal-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- NUEVA LÓGICA: Modal de Cancelación ---
+        let formToCancel = null;
+        const cancelModal = document.getElementById('cancelModal');
+        const modalInput = document.getElementById('modalMotivoInput');
+        const modalError = document.getElementById('modalError');
+
+        // 1. Abrir el modal al dar clic en "Cancelar"
+        function openCancelModal(button) {
+            formToCancel = button.closest('form'); // Recordamos qué cita estamos cancelando
+            
+            // Reseteamos el modal
+            modalInput.value = "";
+            modalError.style.display = "none";
+            modalInput.style.borderColor = "#444";
+            
+            cancelModal.style.display = 'flex'; // Mostramos la ventana
         }
+
+        // 2. Botón Cerrar
+        document.getElementById('btnCloseCancel').addEventListener('click', () => {
+            cancelModal.style.display = 'none';
+            formToCancel = null;
+        });
+
+        // 3. Botón Confirmar (El que envía de verdad)
+        document.getElementById('btnConfirmCancel').addEventListener('click', () => {
+            const motivo = modalInput.value.trim();
+            
+            // Validación simple
+            if (motivo.length < 5) {
+                modalError.style.display = "block";
+                modalInput.style.borderColor = "#ff6b6b";
+                return;
+            }
+
+            if (formToCancel) {
+                // Pasamos el texto del modal al formulario oculto
+                formToCancel.querySelector('.hidden-motivo').value = motivo;
+                // Enviamos el formulario
+                formToCancel.submit();
+            }
+        });
+
+        // Cerrar si se da clic fuera
+        window.addEventListener('click', (e) => {
+            if (e.target === cancelModal) cancelModal.style.display = 'none';
+        });
     </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertas = document.querySelectorAll('.alert-success, .alert-error');
+            
+            if (alertas.length > 0) {
+                setTimeout(function() {
+                    alertas.forEach(alerta => {
+                        alerta.style.transition = "opacity 0.5s ease";
+                        alerta.style.opacity = "0";
+                        setTimeout(() => alerta.remove(), 500);
+                    });
+                }, 3000);
+            }
+        });
+    </script>
+
+
 
 </body>
 </html>

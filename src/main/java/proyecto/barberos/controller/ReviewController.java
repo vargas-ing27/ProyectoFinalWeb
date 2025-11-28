@@ -1,25 +1,32 @@
 package proyecto.barberos.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*; // <--- Este incluye @GetMapping, @PostMapping, @PathVariable
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.bind.annotation.PathVariable; // Importante
+import org.springframework.web.bind.annotation.PathVariable;
 
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.User;
 import proyecto.barberos.entity.Review;
 import proyecto.barberos.repository.BarberProfileRepository;
+import proyecto.barberos.repository.UserRepository;
 import proyecto.barberos.service.ReviewService;
 
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Reseñas", description = "API para gestión de reseñas y calificaciones")
 @Controller
 @RequestMapping("/reviews")
 public class ReviewController {
@@ -30,14 +37,26 @@ public class ReviewController {
     @Autowired
     private BarberProfileRepository barberProfileRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
+    }
+
+    @Operation(summary = "Agregar reseña", description = "Agrega una calificación y/o comentario para un barbero")
     @PostMapping("/add")
-    public String agregarResena(@RequestParam Long barberId,
-                                @RequestParam(required = false) Integer rating, // Opcional
-                                @RequestParam(required = false) String comment, // Opcional
-                                HttpSession session,
+    public String agregarResena(@Parameter(description = "ID del barbero") @RequestParam Long barberId,
+                                @Parameter(description = "Calificación (1-5)") @RequestParam(required = false) Integer rating,
+                                @Parameter(description = "Comentario del cliente") @RequestParam(required = false) String comment,
                                 RedirectAttributes redirectAttributes) {
         
-        User cliente = (User) session.getAttribute("usuarioSesion");
+        User cliente = getAuthenticatedUser();
         if (cliente == null) return "redirect:/login";
 
         Optional<BarberProfile> barberOpt = barberProfileRepository.findById(barberId);
@@ -53,13 +72,13 @@ public class ReviewController {
         return "redirect:/ver/barbero/" + barberId;
     }
 
-@PostMapping("/delete/{reviewId}")
-    public String eliminarResena(@PathVariable Long reviewId, 
-                                 @RequestParam Long barberId,
-                                 HttpSession session, 
+    @Operation(summary = "Eliminar reseña", description = "Elimina una reseña existente del cliente")
+    @PostMapping("/delete/{reviewId}")
+    public String eliminarResena(@Parameter(description = "ID de la reseña") @PathVariable Long reviewId, 
+                                 @Parameter(description = "ID del barbero") @RequestParam Long barberId,
                                  RedirectAttributes redirectAttributes) {
         
-        User cliente = (User) session.getAttribute("usuarioSesion");
+        User cliente = getAuthenticatedUser();
         
         // 1. Seguridad: Debe estar logueado
         if (cliente == null) {
@@ -79,9 +98,10 @@ public class ReviewController {
         return "redirect:/ver/barbero/" + barberId;
     }
 
+    @Operation(summary = "Ver mis reseñas", description = "Muestra todas las reseñas del barbero logueado")
     @GetMapping("/mis-resenas")
-    public String verMisResenas(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    public String verMisResenas(Model model) {
+        User user = getAuthenticatedUser();
         
         // Seguridad: Solo barberos
         if (user == null || !"BARBER".equals(user.getRole())) {

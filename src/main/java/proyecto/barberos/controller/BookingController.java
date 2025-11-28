@@ -1,5 +1,10 @@
 package proyecto.barberos.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -7,6 +12,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.Service; 
@@ -16,7 +24,9 @@ import proyecto.barberos.entity.Appointment;
 
 import proyecto.barberos.repository.BarberProfileRepository;
 import proyecto.barberos.repository.ServiceRepository;
+import proyecto.barberos.repository.UserRepository;
 import proyecto.barberos.service.AppointmentService;
+import proyecto.barberos.service.UserService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,6 +34,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Reservas", description = "API para gestión de citas y reservas")
 @Controller
 @RequestMapping("/booking")
 public class BookingController {
@@ -38,17 +49,29 @@ public class BookingController {
     private ServiceRepository serviceRepository;
 
     @Autowired
-    private proyecto.barberos.service.UserService userService; // Necesitamos esto para guardar el usuario
+    private UserService userService; 
 
-    // 1. Mostrar Calendario y Huecos Libres
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            // Buscar usuario por email desde el contexto de Spring Security
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
+    }
+
+    @Operation(summary = "Mostrar calendario de disponibilidad", description = "Muestra las fechas y horas disponibles para reservar con un barbero")
     @GetMapping("/{barberId}/{serviceId}")
-    public String mostrarCalendario(@PathVariable Long barberId, 
-                                    @PathVariable Long serviceId,
-                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-                                    HttpSession session, 
+    public String mostrarCalendario(@Parameter(description = "ID del barbero") @PathVariable Long barberId, 
+                                    @Parameter(description = "ID del servicio") @PathVariable Long serviceId,
+                                    @Parameter(description = "Fecha seleccionada (opcional)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
                                     Model model) {
         
-        User cliente = (User) session.getAttribute("usuarioSesion");
+        User cliente = getAuthenticatedUser();
         if (cliente == null) return "redirect:/login";
 
         Optional<BarberProfile> barberOpt = barberProfileRepository.findById(barberId);
@@ -71,7 +94,7 @@ public class BookingController {
             
             model.addAttribute("usuario", cliente);
             model.addAttribute("isLoggedIn", true);
-            model.addAttribute("isAdmin", "ADMIN".equals(cliente.getRole()));
+
 
             return "booking-date";
         }
@@ -79,17 +102,20 @@ public class BookingController {
         return "redirect:/home";
     }
 
-    // 2. Confirmar Reserva
- @PostMapping("/confirm")
-    public String confirmarReserva(@RequestParam Long barberId,
-                                   @RequestParam Long serviceId,
-                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime hora,
-                                   @RequestParam(required = false) String clientePhone, // <--- NUEVO CAMPO
-                                   HttpSession session,
+    @Operation(summary = "Confirmar reserva", description = "Confirma y agenda una cita para el cliente")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "302", description = "Cita agendada exitosamente"),
+        @ApiResponse(responseCode = "302", description = "Error al agendar cita")
+    })
+    @PostMapping("/confirm")
+    public String confirmarReserva(@Parameter(description = "ID del barbero") @RequestParam Long barberId,
+                                   @Parameter(description = "ID del servicio") @RequestParam Long serviceId,
+                                   @Parameter(description = "Fecha de la cita") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                                   @Parameter(description = "Hora de la cita") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime hora,
+                                   @Parameter(description = "Teléfono del cliente (opcional)") @RequestParam(required = false) String clientePhone,
                                    RedirectAttributes redirectAttributes) {
         
-        User cliente = (User) session.getAttribute("usuarioSesion");
+        User cliente = getAuthenticatedUser();
         if (cliente == null) return "redirect:/login";
 
         // LÓGICA DE TELÉFONO: Si el usuario no tenía y nos lo envió ahora, lo guardamos
@@ -97,8 +123,7 @@ public class BookingController {
             try {
                 // Actualizamos el teléfono del cliente
                 cliente.setPhone(clientePhone);
-                userService.actualizarUsuario(cliente); // Necesitarás crear este método simple en UserService
-                session.setAttribute("usuarioSesion", cliente); // Actualizamos la sesión
+                userService.actualizarUsuario(cliente); 
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("error", "El teléfono ya está en uso por otro cliente.");
                 return "redirect:/booking/" + barberId + "/" + serviceId;
@@ -125,15 +150,14 @@ public class BookingController {
         return "redirect:/home";
     }
 
-  // 3. Cancelar Cita (Actualizado)
+    @Operation(summary = "Cancelar cita", description = "Cancela una cita existente con un motivo")
     @PostMapping("/cancel")
-    public String cancelarCita(@RequestParam Long citaId, 
-                               @RequestParam String motivo,
-                               @RequestParam(required = false) String redirectUrl,
-                               HttpSession session,
+    public String cancelarCita(@Parameter(description = "ID de la cita") @RequestParam Long citaId, 
+                               @Parameter(description = "Motivo de cancelación") @RequestParam String motivo,
+                               @Parameter(description = "URL de redirección (opcional)") @RequestParam(required = false) String redirectUrl,
                                RedirectAttributes redirectAttributes) {
         
-        User usuario = (User) session.getAttribute("usuarioSesion");
+        User usuario = getAuthenticatedUser();
         if (usuario == null) return "redirect:/login";
 
         try {
@@ -148,13 +172,12 @@ public class BookingController {
         return "redirect:/home"; 
     }
 
-    // 4. NUEVO: Endpoint para Ocultar (La "X")
+    @Operation(summary = "Ocultar cita", description = "Oculta una cita de la vista del usuario")
     @PostMapping("/hide")
-    public String ocultarCita(@RequestParam Long citaId,
-                              @RequestParam(required = false) String redirectUrl,
-                              HttpSession session) {
+    public String ocultarCita(@Parameter(description = "ID de la cita") @RequestParam Long citaId,
+                              @Parameter(description = "URL de redirección (opcional)") @RequestParam(required = false) String redirectUrl) {
         
-        User usuario = (User) session.getAttribute("usuarioSesion");
+        User usuario = getAuthenticatedUser();
         if (usuario == null) return "redirect:/login";
 
         appointmentService.ocultarCita(citaId, usuario);
@@ -163,16 +186,12 @@ public class BookingController {
         return "redirect:/home";
     }
 
-    // --- 4. NUEVO: PÁGINA DE MIS RESERVAS (CLIENTE) ---
+    @Operation(summary = "Mis reservas", description = "Muestra todas las citas del cliente logueado")
     @GetMapping("/mis-reservas")
-    public String mostrarMisReservas(HttpSession session, Model model) {
+    public String mostrarMisReservas(Model model) {
         
-        User cliente = (User) session.getAttribute("usuarioSesion");
-        
-        // Validar que esté logueado
-        if (cliente == null) {
-            return "redirect:/login"; 
-        }
+        User cliente = getAuthenticatedUser();
+        if (cliente == null) return "redirect:/login";
 
         // Obtener las citas del cliente
         List<Appointment> misCitas = appointmentService.obtenerCitasPorCliente(cliente.getId());
@@ -183,7 +202,6 @@ public class BookingController {
         // Datos para la Navbar
         model.addAttribute("usuario", cliente);
         model.addAttribute("isLoggedIn", true);
-        model.addAttribute("isAdmin", "ADMIN".equals(cliente.getRole()));
 
         return "client-reservations"; // Nombre de la nueva plantilla HTML
     }

@@ -45,7 +45,6 @@
             <div th:if="${isLoggedIn}" class="user-info">
                 <span class="user-greeting">
                     Hola, <b th:text="${usuario.fullName}" class="user-name">Usuario</b>
-                    <span th:if="${isAdmin}" class="badge-admin">ADMIN</span>
                     <span th:if="${usuario.role == 'BARBER'}" class="badge-pro">PRO</span>
                 </span>
                 <a th:href="@{/logout}" class="btn-login btn-logout">Salir</a>
@@ -82,9 +81,6 @@
                     
                     <a th:href="@{/ver/barbero/{id}(id=${perfil.id})}" class="btn-secondary">Ver Perfil</a>
 
-                    <div th:if="${isAdmin}" class="admin-actions">
-                        <button class="btn-admin-delete">Eliminar</button>
-                    </div>
                 </article>
             </div>
 
@@ -118,7 +114,7 @@
             <h3 class="barber-panel-actions-title">Acciones Rápidas</h3>
             <div class="barber-panel-actions">
                 <a th:href="@{/barber/services}" class="btn-primary barber-action-btn">+ Gestionar Servicios</a>
-                <a th:href="@{/barber/schedule}" class="btn-secondary barber-action-btn barber-panel-link-full">Ver Agenda Completa</a>
+                <a th:href="@{/barber/schedule}" class="btn-secondary barber-action-btn barber-panel-link-full">Gestionar Agenda</a>
                <a th:href="@{/barber/setup}" class="btn-secondary barber-action-btn">Editar Mi Perfil</a>
             </div>
 
@@ -167,7 +163,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2025 MiBarbero. Todos los derechos reservados.</p>
+            <p> 2025 MiBarbero. Todos los derechos reservados.</p>
         </div>
     </footer>
 
@@ -189,5 +185,6 @@
             lastScrollTop = scrollTop;
         });
     </script>
+    
 </body>
 </html>

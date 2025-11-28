@@ -1,19 +1,27 @@
 package proyecto.barberos.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-// NO IMPORTAMOS org.springframework.stereotype.Service AQUÍ PARA EVITAR CONFLICTOS
+// NO importamos la anotación Service de Spring aquí para evitar el conflicto de nombres
 
+import proyecto.barberos.entity.Appointment;
 import proyecto.barberos.entity.BarberProfile;
-import proyecto.barberos.entity.Service; // <--- Esta es TU Entidad (la tabla)
-import proyecto.barberos.repository.ServiceRepository;
-import java.util.List; // <--- Faltaba este import para las Listas
+import proyecto.barberos.entity.Service; // <--- Importamos TU entidad correctamente
 
-// Usamos el nombre largo aquí para que Java no se confunda
+import proyecto.barberos.repository.AppointmentRepository;
+import proyecto.barberos.repository.ServiceRepository;
+
+import java.util.List;
+
+// Usamos el nombre completo de la anotación para diferenciarla de tu entidad 'Service'
 @org.springframework.stereotype.Service 
 public class ServiciosService {
 
     @Autowired
     private ServiceRepository serviceRepository;
+    
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
     // Guardar un nuevo servicio
     public void guardarServicio(Service servicio, BarberProfile barbero) {
@@ -26,8 +34,18 @@ public class ServiciosService {
         return serviceRepository.findByBarberId(barberId);
     }
 
-    // Eliminar servicio
-    public void eliminarServicio(Long id) {
-        serviceRepository.deleteById(id);
+    // Eliminar servicio y su historial (Cascada manual)
+    @Transactional 
+    public void eliminarServicio(Long serviceId) {
+        // 1. Buscamos si hay citas con este servicio
+        List<Appointment> citasDelServicio = appointmentRepository.findByServiceId(serviceId);
+        
+        // 2. Si hay citas, las borramos primero
+        if (!citasDelServicio.isEmpty()) {
+            appointmentRepository.deleteAll(citasDelServicio);
+        }
+        
+        // 3. Ahora borramos el servicio
+        serviceRepository.deleteById(serviceId);
     }
 }

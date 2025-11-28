@@ -1,7 +1,11 @@
 package proyecto.barberos.controller;
 
-import jakarta.servlet.http.HttpSession;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,12 +15,14 @@ import proyecto.barberos.entity.Availability;
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.User;
 import proyecto.barberos.repository.BarberProfileRepository;
-import proyecto.barberos.repository.AvailabilityRepository; 
+import proyecto.barberos.repository.AvailabilityRepository;
+import proyecto.barberos.repository.UserRepository;
 import proyecto.barberos.service.AvailabilityService;
 
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Disponibilidad", description = "API para gestión de horarios y disponibilidad de barberos")
 @Controller
 @RequestMapping("/barber/schedule")
 public class AvailabilityController {
@@ -30,10 +36,22 @@ public class AvailabilityController {
     @Autowired
     private AvailabilityRepository availabilityRepository;
 
-    // 1. Ver la Agenda
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
+    }
+
+    @Operation(summary = "Ver horarios", description = "Muestra la página con los horarios de trabajo del barbero")
     @GetMapping
-    public String verHorarios(HttpSession session, Model model) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    public String verHorarios(Model model) {
+        User user = getAuthenticatedUser();
         
         // Seguridad: Solo barberos logueados
         if (user == null || !"BARBER".equals(user.getRole())) {
@@ -55,7 +73,6 @@ public class AvailabilityController {
             // --- DATOS PARA LA NAVBAR ---
             model.addAttribute("usuario", user); 
             model.addAttribute("isLoggedIn", true);
-            model.addAttribute("isAdmin", "ADMIN".equals(user.getRole()));
             // ----------------------------
             
             return "barber-schedule"; 
@@ -64,9 +81,9 @@ public class AvailabilityController {
         return "redirect:/barber/setup";
     }
 
-    // 2. Guardar TODO la semana de una vez (Lógica Segura)
+    @Operation(summary = "Guardar horarios", description = "Guarda todos los horarios de la semana de una vez")
     @PostMapping("/saveAll")
-    public String guardarTodo(@ModelAttribute AvailabilityWrapper wrapper, HttpSession session) {
+    public String guardarTodo(@ModelAttribute AvailabilityWrapper wrapper) {
         
         if (wrapper.getHorarios() != null) {
             for (Availability formDay : wrapper.getHorarios()) {
@@ -94,10 +111,10 @@ public class AvailabilityController {
         return "redirect:/barber/schedule";
     }
 
-    // 3. Botón de Pánico: Restablecer Horarios por Defecto
+    @Operation(summary = "Reiniciar horarios", description = "Restablece los horarios a los valores por defecto")
     @PostMapping("/reset")
-    public String reiniciarHorarios(HttpSession session) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    public String reiniciarHorarios() {
+        User user = getAuthenticatedUser();
         
         if (user != null && "BARBER".equals(user.getRole())) {
             Optional<BarberProfile> perfilOpt = barberProfileRepository.findByUserId(user.getId());

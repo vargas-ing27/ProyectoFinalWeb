@@ -25,4 +25,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     
     // 3. Para el BARBERO: Visible + Futuras (o recientes de hace 5 min)
     List<Appointment> findByBarberIdAndVisibleToBarberTrueAndAppointmentDateAfterOrderByAppointmentDateDesc(Long barberId, LocalDateTime fechaCorte);
+
+    // NUEVO: Buscar todas las citas de un servicio específico
+    List<Appointment> findByServiceId(Long serviceId);
 }

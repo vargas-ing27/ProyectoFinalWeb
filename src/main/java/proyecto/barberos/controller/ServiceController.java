@@ -1,7 +1,13 @@
 package proyecto.barberos.controller;
 
-import jakarta.servlet.http.HttpSession;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -9,14 +15,16 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import proyecto.barberos.entity.BarberProfile;
 import proyecto.barberos.entity.User;
-import proyecto.barberos.entity.Service; // Tu entidad Service
+import proyecto.barberos.entity.Service;
 import proyecto.barberos.repository.BarberProfileRepository;
 import proyecto.barberos.repository.ServiceRepository;
+import proyecto.barberos.repository.UserRepository;
 import proyecto.barberos.service.ServiciosService;
 
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Servicios", description = "API para gestión de servicios de barbería")
 @Controller
 @RequestMapping("/barber/services")
 public class ServiceController {
@@ -30,26 +38,38 @@ public class ServiceController {
     @Autowired
     private ServiceRepository serviceRepository;
 
-    // 1. Mostrar la página (Modo Agregar)
-    @GetMapping
-    public String gestionarServicios(HttpSession session, Model model) {
-        return cargarVistaServicios(session, model, new Service());
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            return userRepository.findByEmailOrUsername(email, email).orElse(null);
+        }
+        return null;
     }
 
-    // 2. Mostrar la página (Modo Editar)
+    @Operation(summary = "Gestionar servicios", description = "Muestra la página para agregar y listar servicios del barbero")
+    @GetMapping
+    public String gestionarServicios(Model model) {
+        return cargarVistaServicios(model, new Service());
+    }
+
+    @Operation(summary = "Editar servicio", description = "Muestra el formulario para editar un servicio existente")
     @GetMapping("/edit/{id}")
-    public String editarServicio(@PathVariable Long id, HttpSession session, Model model) {
+    public String editarServicio(@Parameter(description = "ID del servicio") @PathVariable Long id, Model model) {
         Optional<Service> servicioOpt = serviceRepository.findById(id);
         
         if (servicioOpt.isPresent()) {
-            return cargarVistaServicios(session, model, servicioOpt.get());
+            return cargarVistaServicios(model, servicioOpt.get());
         }
         return "redirect:/barber/services";
     }
 
     // MÉTODO AUXILIAR PARA NO REPETIR CÓDIGO
-    private String cargarVistaServicios(HttpSession session, Model model, Service servicioFormulario) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    private String cargarVistaServicios(Model model, Service servicioFormulario) {
+        User user = getAuthenticatedUser();
         
         // Seguridad: Solo barberos logueados
         if (user == null || !"BARBER".equals(user.getRole())) {
@@ -71,7 +91,6 @@ public class ServiceController {
             // Sin esto, el header dará error al intentar mostrar el nombre del usuario
             model.addAttribute("usuario", user);
             model.addAttribute("isLoggedIn", true);
-            model.addAttribute("isAdmin", "ADMIN".equals(user.getRole()));
             // -------------------------------------------
             
             return "barber-services"; 
@@ -80,10 +99,10 @@ public class ServiceController {
         return "redirect:/barber/setup";
     }
 
-    // 3. Guardar (Sirve para CREAR y ACTUALIZAR)
+    @Operation(summary = "Agregar servicio", description = "Crea o actualiza un servicio para el barbero")
     @PostMapping("/add")
-    public String agregarServicio(@ModelAttribute Service servicio, HttpSession session) {
-        User user = (User) session.getAttribute("usuarioSesion");
+    public String agregarServicio(@ModelAttribute Service servicio) {
+        User user = getAuthenticatedUser();
         
         if (user != null && "BARBER".equals(user.getRole())) {
             Optional<BarberProfile> perfilOpt = barberProfileRepository.findByUserId(user.getId());
@@ -94,8 +113,13 @@ public class ServiceController {
         return "redirect:/barber/services";
     }
 
-   @GetMapping("/delete/{id}")
-    public String eliminarServicio(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    @Operation(summary = "Eliminar servicio", description = "Elimina un servicio si no tiene citas agendadas")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "302", description = "Servicio eliminado exitosamente"),
+        @ApiResponse(responseCode = "302", description = "No se puede eliminar, tiene citas agendadas")
+    })
+    @GetMapping("/delete/{id}")
+    public String eliminarServicio(@Parameter(description = "ID del servicio a eliminar") @PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             // Intentamos borrar
             serviciosService.eliminarServicio(id);

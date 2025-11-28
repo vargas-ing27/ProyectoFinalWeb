@@ -41,6 +41,8 @@
         
         <div class="services-header">
             <h2>Mis Servicios</h2>
+            <div th:if="${exito}" style="color: green; margin-bottom: 15px; text-align: center;" th:text="${exito}"></div>
+            <div th:if="${error}" style="color: red; margin-bottom: 15px; text-align: center;" th:text="${error}"></div>
         </div>
 
         <section class="service-form-section">
@@ -107,15 +109,18 @@
                             <td th:text="${servicio.name}">Nombre</td>
                             <td th:text="${servicio.description}">Desc</td>
                             <td th:text="${servicio.durationMinutes} + ' min'">Tiempo</td>
-                            <td th:text="'$' + ${servicio.price}">Precio</td>
+                            <td style="color: #f4ba1c; font-weight: bold;" 
+                                th:text="'$ ' + ${#numbers.formatInteger(servicio.price, 0, 'POINT')}">$ 20.000</td>
                             <td>
                                 <a th:href="@{/barber/services/edit/{id}(id=${servicio.id})}" class="btn-edit">Editar</a>
 
-                                <a th:href="@{/barber/services/delete/{id}(id=${servicio.id})}" 
-                                   onclick="return confirm('¿Eliminar este servicio?')"
-                                   class="btn-delete">Eliminar</a>
-                                   <div th:if="${exito}" style="color: green; margin-bottom: 15px;" th:text="${exito}"></div>
-<div th:if="${error}" style="color: red; margin-bottom: 15px;" th:text="${error}"></div>
+                                <button type="button" 
+                                        class="btn-delete" 
+                                        th:data-id="${servicio.id}" 
+                                        onclick="openDeleteModal(this.getAttribute('data-id'))"
+                                        style="background: none; border: none; cursor: pointer; font-size: 0.9rem;">
+                                    Eliminar
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -125,9 +130,18 @@
 
     </main>
 
+    <div id="deleteModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <h3>¿Deseas eliminar este servicio?</h3> 
+            <div class="modal-actions">
+                <button id="btnCancelDelete" class="btn-modal-secondary">No</button>
+                <button id="btnConfirmDelete" class="btn-modal-primary">Si</button>
+            </div>
+        </div>
+    </div>
+
    <footer class="footer-minimal">
     <div class="footer-minimal-container">
-        
         <p class="copyright-text">© 2025 MiBarbero. Todos los derechos reservados.</p>
 
         <div class="social-icons-row">
@@ -141,7 +155,6 @@
                 <i class="fa-brands fa-tiktok"></i>
             </a>
         </div>
-
     </div>
 </footer>
 
@@ -162,6 +175,56 @@
             }
             lastScrollTop = scrollTop;
         });
-    </script>
+</script>
+
+<script>
+    let serviceIdToDelete = null;
+    const deleteModal = document.getElementById('deleteModal');
+
+    // Función que se llama al hacer clic en "Eliminar" en la tabla
+    function openDeleteModal(id) {
+        serviceIdToDelete = id; // Guardamos el ID que viene del atributo data-id
+        deleteModal.style.display = 'flex'; // Mostramos el modal (flex para centrar)
+    }
+
+    // Botón NO: Cierra el modal
+    document.getElementById('btnCancelDelete').addEventListener('click', () => {
+        deleteModal.style.display = 'none';
+        serviceIdToDelete = null;
+    });
+
+    // Botón SÍ: Redirige a la URL de borrado real
+    document.getElementById('btnConfirmDelete').addEventListener('click', () => {
+        if (serviceIdToDelete) {
+            // Redirigimos al controlador para que borre
+            window.location.href = '/barber/services/delete/' + serviceIdToDelete;
+        }
+    });
+
+    // Cerrar si se hace clic fuera de la caja
+    window.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    });
+</script>
+
+<script>
+    // Ocultar alertas de éxito/error automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const alertas = document.querySelectorAll('.alert-success, .alert-error, div[style*="color: green"], div[style*="color: red"]');
+        
+        if (alertas.length > 0) {
+            setTimeout(function() {
+                alertas.forEach(alerta => {
+                    alerta.style.transition = "opacity 0.5s ease";
+                    alerta.style.opacity = "0";
+                    setTimeout(() => alerta.remove(), 500);
+                });
+            }, 3000); // 3 segundos
+        }
+    });
+</script>
+
 </body>
 </html>

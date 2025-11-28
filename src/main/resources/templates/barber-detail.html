@@ -232,7 +232,7 @@
         // --- 1. LÓGICA DEL MAPA ---
         var latDb = /*[[${barbero.latitude}]]*/ null;
         var lngDb = /*[[${barbero.longitude}]]*/ null;
-        var shopName = [[${barbero.shopName}]];
+       var shopName = /*[[${barbero.shopName}]]*/ 'Nombre por defecto';
 
         // Si no hay coordenadas, usamos Neiva por defecto
         var barberLat = (latDb !== null) ? latDb : 2.9273;
