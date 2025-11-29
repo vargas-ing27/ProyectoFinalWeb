@@ -184,6 +184,14 @@
             }
             lastScrollTop = scrollTop;
         });
+
+        // Detectar si la página se cargó desde la caché del botón "Atrás"
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        // Si viene de caché, forzamos una recarga al servidor
+        window.location.reload();
+    }
+});
     </script>
     
 </body>

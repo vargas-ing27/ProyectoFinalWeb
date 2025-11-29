@@ -30,7 +30,15 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            .headers(headers -> headers
+    .cacheControl(cache -> cache.disable()) // Esto añade: no-cache, no-store, must-revalidate
+)
+
+
             .authorizeHttpRequests(authz -> authz
+
+            
                 // Endpoints públicos (sin autenticación)
                 .requestMatchers("/login", "/register", "/", "/home").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
